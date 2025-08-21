@@ -1,0 +1,38 @@
+
+
+<div class="home">
+
+
+    <div class="categories">
+
+        <div class="category" *ngFor="let category of categories">
+
+            <div class="category-icon">
+
+                <div>
+                <img [src]="category.categoryImage" alt="my-icon"/>
+                 </div>
+
+
+            </div>
+            <div class="category-title">
+
+                <p>
+                    <span [innerHTML]="category.categoryName"></span>
+                    <br>
+                    <span>{{ category.categoryItemsNumber }} Items</span>
+                  </p>
+                  
+
+            </div>
+
+
+
+        </div>
+
+
+    </div>
+
+
+<!--...........................main background-->
+

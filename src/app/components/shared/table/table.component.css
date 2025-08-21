@@ -1,0 +1,126 @@
+/* Table Styling */
+.custom-table th {
+  font-weight: bold;
+  text-align: left;
+  background-color: #f8f9fa;
+  padding: 10px;
+}
+
+.custom-table td {
+  padding: 10px;
+  vertical-align: middle;
+}
+
+:host ::ng-deep .custom-table .p-datatable {
+  border: 1px solid #ddd !important; /* full outer box */
+  border-collapse: collapse !important;
+}
+
+:host ::ng-deep .custom-table .p-datatable-thead > tr > th,
+:host ::ng-deep .custom-table .p-datatable-tbody > tr > td {
+  border: none !important;
+  border-bottom: 1px solid #ddd !important;
+}
+
+:host ::ng-deep .custom-table .p-datatable-tbody > tr:last-child > td {
+  border-bottom: none !important;
+}
+
+/* Image Styling */
+.product-image {
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+  margin: 4px 0;
+  border-radius: 6px;
+  background-color: #fff;
+  border: 1px solid #eaeaea;
+  padding: 4px;
+}
+
+/* Button Styling */
+.buy-btn {
+  background-color: #ED1C24 !important;
+  border: none !important;
+  color: white !important;
+  font-weight: bold;
+  border-radius: 6px;
+  padding: 6px 12px;
+  transition: 0.3s ease-in-out;
+}
+
+.buy-btn:hover {
+  background-color: #c81018 !important;
+}
+
+/* Header of the card */
+.card-header {
+  font-size: 1.4rem;
+  font-weight: bold;
+  color: #333;
+}
+
+:host ::ng-deep .p-datatable thead th {
+  font-weight: bold;
+  text-align: center;
+  padding: 12px;
+}
+
+:host ::ng-deep .p-datatable td {
+  text-align: center;
+  vertical-align: middle;
+}
+
+.action-icon {
+  font-size: 1.2rem;
+  color: #ED1C24;
+  margin-right: 12px;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.action-icon:hover {
+  transform: scale(1.2);
+}
+
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  margin-top: 50px;
+}
+
+.toolbar-filters {
+  display: flex;
+  gap: 10px;
+  flex: 1;
+  max-width: 70%;
+}
+
+.toolbar-select,
+.toolbar-search {
+  padding: 6px 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  flex: 1;
+}
+
+.toolbar-btn {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.toolbar-btn.add {
+  background-color: #4caf50;
+  color: white;
+}
+
+.toolbar-select,
+.toolbar-search,
+.toolbar-btn {
+  z-index: 11;
+  pointer-events: auto;
+}

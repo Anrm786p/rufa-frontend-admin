@@ -1,0 +1,11 @@
+<app-table
+  [title]="'Product List'"
+  [data]="products"
+  [columns]="[
+    { field: 'image', header: 'Image', isImage: true },
+    { field: 'name', header: 'Name' },
+    { field: 'price', header: 'Price' },
+    { field: 'category', header: 'Category' }
+  ]"
+  [showActions]="true">
+</app-table>

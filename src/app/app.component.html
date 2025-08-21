@@ -1,0 +1,13 @@
+
+
+
+@if(isLoginPage){
+<router-outlet></router-outlet>
+}
+@else {
+<app-navbar></app-navbar>
+
+<app-loader></app-loader>
+<app-home></app-home>
+<router-outlet></router-outlet>
+}
