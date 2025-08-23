@@ -1,27 +1,54 @@
+<p-toast></p-toast>
+
 <div class="login-modal">
   <div class="login-box">
-    <h2>Login To Your Account</h2>
+    <h2>Welcome Back 👋</h2>
 
-    <form (ngSubmit)="login()" #loginForm="ngForm">
-      <div class="input-group">
-        <input 
-          type="email" 
-          name="email"
-          [(ngModel)]="email"
-          placeholder="Email" 
-          required />
+    <form [formGroup]="loginForm" (ngSubmit)="login()">
+      <div class="field">
+        <label for="email">Email address</label>
+        <span class="p-input-icon-left w-full">
+          <i class="pi pi-envelope"></i>
+          <input 
+            id="email"
+            type="email" 
+            pInputText 
+            formControlName="email"
+            placeholder="Enter your email" 
+            class="w-full"
+            [style]="{'background': '#f9fafb'}" />
+        </span>
+        <small class="p-error" *ngIf="loginForm.get('email')?.invalid && loginForm.get('email')?.touched">
+          Please enter a valid email address
+        </small>
       </div>
 
-      <div class="input-group">
-        <input 
-          type="password" 
-          name="password"
-          [(ngModel)]="password"
-          placeholder="Password" 
-          required />
+      <div class="field">
+        <label for="password">Password</label>
+        <span class="p-input-icon-left w-full">
+          <i class="pi pi-lock"></i>
+          <input 
+            id="password"
+            type="password" 
+            pInputText 
+            formControlName="password"
+            placeholder="Enter your password" 
+            class="w-full"
+            [style]="{'background': '#f9fafb'}" />
+        </span>
+        <small class="p-error" *ngIf="loginForm.get('password')?.invalid && loginForm.get('password')?.touched">
+          Password is required
+        </small>
       </div>
 
-      <button type="submit" class="btn-login">Login</button>
+      <button 
+        pButton 
+        type="submit" 
+        [loading]="isLoading"
+        [disabled]="loginForm.invalid || isLoading" 
+        class="w-full"
+        label="Sign In">
+      </button>
     </form>
   </div>
 </div>

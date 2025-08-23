@@ -1,4 +1,4 @@
-<p-card [style]="{ 'margin': '0 10%' }">
+<p-card [style]="{ 'margin': '10% 2%' }">
   <ng-template pTemplate="header">
     <div class="card-header">{{ title }}</div>
   </ng-template>
@@ -6,24 +6,50 @@
   <div class="toolbar table-toolbar">
     <div class="toolbar-filters">
       <!-- Category -->
-      <select class="toolbar-select">
-        <option>Select Category</option>
-      </select>
+      <p-dropdown *ngIf="filters.categories?.length"
+              [options]="filters.categories"
+              [(ngModel)]="selectedCategory"
+              (onChange)="onCategoryFilter.emit(selectedCategory)"
+              placeholder="Select Category"
+              [style]="{'min-width': '200px'}"
+              styleClass="mr-2">
+      </p-dropdown>
 
       <!-- Subcategory -->
-      <select class="toolbar-select">
-        <option>Select Subcategory</option>
-      </select>
+      <p-dropdown *ngIf="filters.subcategories?.length"
+              [options]="filters.subcategories"
+              [(ngModel)]="selectedSubcategory"
+              (onChange)="onSubcategoryFilter.emit(selectedSubcategory)"
+              placeholder="Select Subcategory"
+              [style]="{'min-width': '200px'}"
+              styleClass="mr-2">
+      </p-dropdown>
 
       <!-- Search -->
-      <input type="text" placeholder="Search..." class="toolbar-search" />
+      <span *ngIf="filters.enableSearch" class="p-input-icon-left">
+        <i class="pi pi-search"></i>
+        <input 
+          pInputText
+          type="text" 
+          placeholder="Search..." 
+          class="toolbar-search"
+          [(ngModel)]="searchText"
+          (input)="search()" />
+      </span>
     </div>
 
     <!-- Add button -->
-    <button class="toolbar-btn add">+</button>
+    <button 
+      *ngIf="showActions && showAddButton" 
+      pButton 
+      pRipple 
+      icon="pi pi-plus" 
+      class="p-button-rounded p-button-success" 
+      (click)="onAdd.emit()">
+    </button>
   </div>
 
-  <p-table [value]="data" responsiveLayout="scroll" styleClass="p-datatable-gridlines custom-table">
+  <p-table [value]="data" responsiveLayout="scroll" styleClass="p-datatable-gridlines custom-table" [paginator]="true" [rows]="rows" [totalRecords]="totalRecords" [lazy]="lazy" (onPage)="pageChange($event)" [rowHover]="true">
     <ng-template pTemplate="header">
       <tr>
         <th *ngFor="let col of columns">{{ col.header }}</th>
@@ -39,13 +65,25 @@
             <img [src]="row[col.field]" alt="image" width="60" height="60" style="margin: 4px 0; border-radius: 8px;" />
           </ng-container>
           <ng-template #normalField>
-            {{ row[col.field] }}
+            {{ getNestedProperty(row, col.field) }}
           </ng-template>
         </td>
 
         <td *ngIf="showActions">
-          <i class="pi pi-pencil action-icon" title="Edit"></i>
-          <i class="pi pi-trash action-icon" title="Delete"></i>
+          <button 
+            pButton 
+            pRipple 
+            icon="pi pi-pencil" 
+            class="p-button-rounded p-button-success p-button-text mr-2" 
+            (click)="onEdit.emit(row)">
+          </button>
+          <button 
+            pButton 
+            pRipple 
+            icon="pi pi-trash" 
+            class="p-button-rounded p-button-danger p-button-text" 
+            (click)="onDelete.emit(row)">
+          </button>
         </td>
       </tr>
     </ng-template>

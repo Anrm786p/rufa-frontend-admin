@@ -1,0 +1,162 @@
+<app-shared-dialog
+  [title]="mode === 'create' ? 'Add Product' : (mode === 'edit' ? 'Edit Product' : 'View Product')"
+  [(visible)]="displayDialog"
+  [submitLabel]="mode === 'view' ? 'Close' : 'Add Product'"
+  [cancelLabel]="'Close'"
+  [showSubmit]="mode === 'create'"
+  [isSubmitDisabled]="mode === 'create' && !isFormComplete"
+  (cancel)="closeDialog()"
+  (submit)="addProduct()">
+
+  <form [formGroup]="addProductForm" (ngSubmit)="addProduct()" class="p-fluid product-form">
+    <!-- Basic Info -->
+    <div class="field">
+      <label for="name" class="required">Product Name</label>
+      <input id="name" type="text" pInputText formControlName="name" />
+    </div>
+
+    <div class="field">
+      <label for="description" class="required">Description</label>
+      <textarea id="description" class="w-full p-inputtextarea" formControlName="description" rows="4"></textarea>
+    </div>
+
+  <!-- Category -->
+    <div class="field">
+      <label for="categoryId" class="required">Category</label>
+      <p-select
+        id="categoryId"
+        formControlName="categoryId"
+        [options]="categories"
+        optionLabel="name"
+        optionValue="id"
+        placeholder="Select Category"
+        (onChange)="onCategoryChange($event.value)">
+      </p-select>
+    </div>
+
+    <!-- Subcategories Multi-select -->
+    <div class="field">
+      <label class="required">Subcategories</label>
+      <p-multiSelect
+        formControlName="subcategoryIds"
+        [options]="filteredSubcategories"
+        optionLabel="name"
+        optionValue="id"
+        display="chip"
+  [filter]="false"
+        [showClear]="true"
+        placeholder="Select Subcategories">
+      </p-multiSelect>
+    </div>
+
+    <!-- Product Variation Type (moved from each variation) -->
+    <div class="field">
+      <label class="required">Variation Type</label>
+      <p-select formControlName="variationType" [options]="variationTypeOptions" optionLabel="label" optionValue="value" placeholder="Select Type"></p-select>
+    </div>
+
+    <!-- SEO Tags (Chips) -->
+    <div class="field">
+      <label>SEO Tags</label>
+      <p-chips formControlName="seoTags" separator="," addOnBlur="true" placeholder="Type tag and press Enter"></p-chips>
+      <small class="text-muted">Will be saved as comma separated list.</small>
+    </div>
+
+    <!-- Product level update button in edit mode -->
+    <div *ngIf="mode==='edit'" class="mb-3" style="display:flex; justify-content:flex-end;">
+      <button type="button" pButton severity="success" icon="pi pi-check" label="Done" class="done-update-btn" [disabled]="!canUpdateProductInfo()" (click)="updateProductInfo()"></button>
+    </div>
+
+    <!-- Variations Section -->
+    <div class="variation-section-card">
+      <div class="variation-section-header">
+        <h4>Variations</h4>
+        <small *ngIf="addProductForm.get('variationType')?.value === 'single'">Single mode</small>
+        <small *ngIf="addProductForm.get('variationType')?.value === 'multi'">Multi mode (need at least 2)</small>
+      </div>
+      <div formArrayName="variations" class="variations-list">
+        <div class="variation-card" *ngFor="let variation of variationsArray.controls; let i = index" [formGroupName]="i">
+          <div class="variation-card-header">
+            <h5>Variation {{ i + 1 }}</h5>
+          </div>
+          <div class="grid variation-grid">
+            <div class="col-12 md:col-4 field">
+              <label class="required">Name</label>
+              <input type="text" pInputText formControlName="name" />
+            </div>
+            <div class="col-12 md:col-4 field">
+              <label class="required">Our Price</label>
+              <input type="number" pInputText formControlName="ourPrice" />
+            </div>
+            <div class="col-12 md:col-4 field">
+              <label class="required">Market Price</label>
+              <input type="number" pInputText formControlName="marketPrice" />
+            </div>
+            <div class="col-12 md:col-4 field">
+              <label class="required">Purchase Price</label>
+              <input type="number" pInputText formControlName="purchasePrice" />
+            </div>
+            <div class="col-12 md:col-4 field">
+              <label class="required">Weight</label>
+              <input type="number" pInputText formControlName="weight" />
+            </div>
+          </div>
+          <!-- Images -->
+          <div class="field variation-images-field">
+            <label class="required">Images (max {{ maxImagesPerVariation }})</label>
+            <!-- Edit/Create upload -->
+            <ng-container *ngIf="mode !== 'view'; else viewImages">
+              <p-fileUpload *ngIf="showUploadInput(i)"
+                mode="basic"
+                [auto]="false"
+                [multiple]="true"
+                chooseLabel="Select Images"
+                accept="image/*"
+                [showCancelButton]="false"
+                [showUploadButton]="false"
+                (onSelect)="onVariationFilesSelected($event, i)"
+              ></p-fileUpload>
+              <!-- Existing images (edit mode) -->
+              <div class="variation-thumbs existing" *ngIf="mode==='edit' && !isAllImagesMarkedForRemoval(i) && currentProduct?.variations?.[i]?.processedImages?.length">
+                <div class="thumb position-relative" *ngFor="let img of currentProduct.variations[i].processedImages">
+                  <img [src]="img" alt="old image" style="max-width:70px;max-height:70px;object-fit:cover;border:2px solid #ccc;border-radius:4px;" />
+                  <small class="text-muted d-block" style="font-size:10px;">Existing</small>
+                </div>
+                <button type="button" pButton severity="danger" icon="pi pi-times" label="Remove Images" class="p-button-sm" (click)="removeExistingVariationImages(i)"></button>
+              </div>
+              <div class="variation-thumbs" *ngIf="variationsArray.at(i).get('images')?.value?.length">
+                <div class="thumb" *ngFor="let img of variationsArray.at(i).get('images')?.value; let imgIdx = index">
+                  <span>{{ img.name }}</span>
+                  <button type="button" pButton icon="pi pi-times" class="p-button-rounded p-button-danger p-button-text" (click)="removeVariationImage(i, imgIdx)"></button>
+                </div>
+              </div>
+            </ng-container>
+            <!-- View mode thumbnails from original product -->
+            <ng-template #viewImages>
+              <div class="variation-thumbs" *ngIf="currentProduct?.variations?.[i]?.processedImages?.length">
+                <div class="thumb" *ngFor="let img of currentProduct.variations[i].processedImages">
+                  <img [src]="img" alt="image" style="max-width:70px;max-height:70px;object-fit:cover;border:1px solid #ddd;border-radius:4px;" />
+                </div>
+              </div>
+              <div class="text-muted small" *ngIf="!currentProduct?.variations?.[i]?.processedImages?.length">No images</div>
+            </ng-template>
+            <small class="p-error" *ngIf="variationsArray.at(i).get('images')?.errors?.['minImages']">At least 1 image required.</small>
+            <small class="p-error" *ngIf="variationsArray.at(i).get('images')?.errors?.['maxImages']">Maximum {{ maxImagesPerVariation }} images allowed.</small>
+          </div>
+          <!-- Variation action buttons (edit mode) -->
+          <div *ngIf="mode==='edit'" class="variation-actions">
+            <div class="spacer"></div>
+            <button type="button" pButton severity="success" icon="pi pi-save" [label]="isExistingVariation(i) ? 'Save Variation' : 'Create Variation'" class="var-btn" [disabled]="!canSaveVariation(i)" (click)="saveVariation(i)"></button>
+            <button *ngIf="persistedVariationCount() > 1" type="button" pButton severity="danger" icon="pi pi-trash" label="Delete" class="var-btn" (click)="deleteVariation(i)"></button>
+          </div>
+        </div>
+      </div>
+      <div class="mt-3 text-center" *ngIf="mode==='edit' && addProductForm.get('variationType')?.value === 'multi'">
+        <button pButton type="button" icon="pi pi-plus" label="Add Variation" (click)="addNewVariation()"></button>
+      </div>
+      <div class="mt-3 text-center" *ngIf="mode==='create' && addProductForm.get('variationType')?.value === 'multi'">
+        <button pButton type="button" icon="pi pi-plus" label="Add Variation" (click)="addVariation()"></button>
+      </div>
+    </div>
+  </form>
+</app-shared-dialog>

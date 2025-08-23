@@ -1,0 +1,22 @@
+<app-shared-dialog
+  title="Add Subcategory"
+  [(visible)]="displayDialog"
+  submitLabel="Add Subcategory"
+  [isSubmitDisabled]="addSubcategoryForm.invalid"
+  (cancel)="closeDialog()"
+  (submit)="addSubcategory()">
+
+  <form [formGroup]="addSubcategoryForm" (ngSubmit)="addSubcategory()">
+    <div class="p-fluid">
+      <div class="field">
+        <label for="name">Name</label>
+        <input id="name" type="text" pInputText formControlName="name" />
+      </div>
+
+      <div class="field">
+        <label for="categoryName">Category</label>
+        <input id="categoryName" type="text" pInputText formControlName="categoryName" />
+      </div>
+    </div>
+  </form>
+</app-shared-dialog>

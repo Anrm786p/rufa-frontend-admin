@@ -1,0 +1,61 @@
+<app-shared-dialog
+  [title]="isEditMode ? 'Edit Category' : 'Add Category'"
+  [(visible)]="displayDialog"
+  [submitLabel]="isEditMode ? 'Update Category' : 'Add Category'"
+  [isSubmitDisabled]="!isFormValid()"
+  (cancel)="closeDialog()"
+  (submit)="addCategory()">
+
+  <form [formGroup]="addCategoryForm" (ngSubmit)="addCategory()">
+    <div class="p-fluid">
+      <div class="field">
+        <label for="name" class="required">Category Name</label>
+        <input 
+          id="name" 
+          type="text" 
+          pInputText 
+          formControlName="name"
+          [ngClass]="{'ng-invalid ng-dirty': addCategoryForm.get('name')?.invalid && addCategoryForm.get('name')?.touched}" 
+        />
+        <small class="p-error block" *ngIf="addCategoryForm.get('name')?.invalid && addCategoryForm.get('name')?.touched">
+          Category name is required
+        </small>
+      </div>
+
+      <div class="field">
+        <label for="image" [class.required]="!isEditMode">Category Image</label>
+        <div *ngIf="currentImageUrl && !selectedImage" class="mb-2">
+          <img [src]="currentImageUrl" 
+               alt="Current category image" 
+               style="max-width: 200px; max-height: 200px; object-fit: contain;" 
+               (error)="handleImageError($event)"
+               onerror="this.style.display='none'" />
+          <div *ngIf="imageLoadError" class="text-danger">
+            <small>Error loading image. URL: {{currentImageUrl}}</small>
+          </div>
+        </div>
+        <p-fileUpload
+          #fileUpload
+          mode="basic"
+          [auto]="true"
+          [chooseLabel]="isEditMode ? 'Change Image' : 'Choose Image'"
+          [maxFileSize]="1000000"
+          accept="image/*"
+          (onSelect)="onImageUpload($event)"
+          [customUpload]="true"
+          [ngClass]="{'ng-invalid': !selectedImage && !isEditMode && addCategoryForm.get('image')?.touched}"
+        >
+        </p-fileUpload>
+        <small class="p-error block" *ngIf="!selectedImage && !isEditMode && addCategoryForm.get('image')?.touched">
+          Category image is required
+        </small>
+        <small class="text-success block" *ngIf="selectedImage">
+          Selected image: {{ selectedImage.name }}
+        </small>
+        <small class="text-muted block" *ngIf="isEditMode && !selectedImage">
+          Leave empty to keep the current image
+        </small>
+      </div>
+    </div>
+  </form>
+</app-shared-dialog>

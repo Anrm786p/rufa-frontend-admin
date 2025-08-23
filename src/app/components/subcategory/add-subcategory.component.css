@@ -1,0 +1,15 @@
+p-dialog {
+  width: 30vw;
+}
+
+.field {
+  margin-bottom: 1rem;
+}
+
+.p-dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+}
+
+
+

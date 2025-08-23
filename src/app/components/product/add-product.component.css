@@ -1,0 +1,594 @@
+/* Apply to PrimeNG dialog */
+:host ::ng-deep .p-dialog {
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+  height: 60vh !important;
+  width: 60vw !important;
+  max-width: 800px !important;
+  margin: auto;
+}
+
+/* Dialog header */
+:host ::ng-deep .p-dialog .p-dialog-header {
+  background: var(--bs-light);   /* use Bootstrap light color */
+  font-weight: 600;
+  font-size: 1.2rem;
+  border-bottom: 1px solid var(--bs-border-color);
+  padding: 1rem 1.5rem;
+  width: 100%;                   /* ensure full width */
+}
+
+/* Dialog content area */
+:host ::ng-deep .p-dialog .p-dialog-content {
+  background: #ffffff;
+  padding: 1.5rem;
+  border: none;
+  height: calc(60vh - 120px);
+  overflow-y: auto;
+  width: 100%;
+  max-height: none !important;
+}
+
+:host ::ng-deep .p-dialog-content form {
+  width: 100% !important;
+}
+
+:host ::ng-deep .p-dialog-content .field {
+  width: 100% !important;
+  display: block !important;
+}
+
+:host ::ng-deep .p-dialog-content textarea.p-inputtextarea {
+  width: 100% !important;
+  box-sizing: border-box !important;
+  display: block !important;
+}
+
+:host ::ng-deep .p-fluid {
+  width: 100% !important;
+  display: block !important;
+}
+
+:host ::ng-deep .w-full {
+  width: 100% !important;
+}
+
+:host ::ng-deep .p-input-wrapper {
+  display: block !important;
+  width: 100% !important;
+}
+
+:host ::ng-deep textarea.p-inputtextarea {
+  width: 100% !important;
+  min-height: 120px !important;
+  resize: vertical !important;
+  border: 2px solid #bdc3c7 !important;
+  border-radius: 6px !important;
+  padding: 0.75rem 1rem !important;
+  font-size: 1rem !important;
+  background: white !important;
+  color: #333333 !important;
+  display: block !important;
+  margin-bottom: 4px !important;
+  box-sizing: border-box !important;
+}
+
+:host ::ng-deep .p-fluid .field {
+  width: 100% !important;
+  display: block !important;
+  
+  textarea {
+    width: 100% !important;
+    min-height: 120px !important;
+  }
+}
+
+/* Dialog footer */
+:host ::ng-deep .p-dialog .p-dialog-footer {
+  background: #f8f9fa;
+  border-top: 1px solid #dee2e6;
+  padding: 1.25rem;
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+}
+
+/* READ-ONLY (view) MODE STYLING */
+:host.view-mode ::ng-deep .product-form input:not([type=file]),
+:host.view-mode ::ng-deep .product-form textarea,
+:host.view-mode ::ng-deep .product-form .p-inputtext,
+:host.view-mode ::ng-deep .product-form .p-multiselect,
+:host.view-mode ::ng-deep .product-form .p-dropdown,
+:host.view-mode ::ng-deep .product-form .p-chips,
+:host.view-mode ::ng-deep .product-form .p-chips input,
+:host.view-mode ::ng-deep .product-form .p-select {
+  pointer-events: none !important;
+  background: #f4f6f8 !important;
+  border-color: #d0d7de !important;
+  color: #374151 !important;
+  opacity: 1 !important;
+}
+
+:host.view-mode ::ng-deep .product-form .p-inputtext:focus,
+:host.view-mode ::ng-deep .product-form textarea:focus {
+  box-shadow: none !important;
+  border-color: #d0d7de !important;
+}
+
+/* Hide add/remove buttons in view mode */
+:host.view-mode ::ng-deep .product-form button.p-button-danger,
+:host.view-mode ::ng-deep .product-form button[label="Add Variation"],
+:host.view-mode ::ng-deep .product-form .p-fileupload,
+:host.view-mode ::ng-deep .product-form .p-chips-token .p-chips-token-icon {
+  display: none !important;
+}
+
+/* Variations section subtle badge for view mode */
+:host.view-mode ::ng-deep .variation-section-header::after {
+  content: 'READ ONLY';
+  margin-left: auto;
+  font-size: 0.6rem;
+  background: #e2e8f0;
+  color: #475569;
+  padding: 2px 6px;
+  border-radius: 4px;
+  letter-spacing: .5px;
+  font-weight: 600;
+}
+
+/* Cursor feedback */
+:host.view-mode ::ng-deep .product-form input,
+:host.view-mode ::ng-deep .product-form textarea {
+  cursor: default !important;
+}
+
+/* Chips read-only appearance */
+:host.view-mode ::ng-deep .p-chips-token {
+  padding-right: 6px !important;
+}
+:host.view-mode ::ng-deep .p-chips-token .pi-times-circle {
+  display: none !important;
+}
+
+/* File upload styling */
+:host ::ng-deep .p-fileupload {
+  width: 100% !important;
+}
+
+:host ::ng-deep .p-fileupload .p-button {
+  background: #2196f3 !important;
+  border: none !important;
+  color: #ffffff !important;
+  padding: 0.75rem 1rem !important;
+  border-radius: 6px !important;
+  font-weight: 500 !important;
+  transition: all 0.2s !important;
+  width: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin: 0 !important;
+}
+
+:host ::ng-deep .p-fileupload-basic {
+  width: 100% !important;
+  max-width: none !important;
+}
+
+:host ::ng-deep .p-fileupload .p-button:hover {
+  background: #1976d2 !important;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+}
+
+:host ::ng-deep .p-fileupload .p-button .p-button-icon {
+  margin-right: 0.5rem !important;
+  font-size: 1.2rem !important;
+}
+
+:host ::ng-deep .p-fileupload .p-button .p-button-label {
+  flex: 1 !important;
+  text-align: center !important;
+  font-size: 1rem !important;
+}
+
+/* Footer buttons styling */
+:host ::ng-deep .p-dialog-footer .p-button {
+  min-width: 120px !important;
+  padding: 0.75rem 1.5rem !important;
+  border-radius: 6px !important;
+  font-weight: 500 !important;
+  transition: all 0.2s !important;
+}
+
+:host ::ng-deep .p-dialog-footer .p-button-secondary {
+  background: #6c757d !important;
+  border: none !important;
+  color: #ffffff !important;
+}
+
+:host ::ng-deep .p-dialog-footer .p-button-secondary:hover {
+  background: #5a6268 !important;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+}
+
+:host ::ng-deep .p-dialog-footer .p-button-success {
+  background: #28a745 !important;
+  border: none !important;
+  color: #ffffff !important;
+}
+
+:host ::ng-deep .p-dialog-footer .p-button-success:hover {
+  background: #218838 !important;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+}
+
+:host ::ng-deep .p-dialog-footer .p-button-success:disabled {
+  background: #8fd9a8 !important;
+  cursor: not-allowed !important;
+  opacity: 0.7 !important;
+}
+
+/* Form fields with Bootstrap integration */
+.field {
+  margin-bottom: 1.5rem;
+  position: relative;
+  width: 100%;
+}
+
+.field label {
+  font-weight: 500;
+  margin-bottom: 0.75rem;
+  display: block;
+  color: #333;
+  font-size: 0.95rem;
+}
+
+/* Variation section grouping */
+.variation-section-card { 
+  border: 2px solid #e2e8f0; 
+  border-radius: 10px; 
+  padding: 1rem 1.25rem; 
+  background: #fafbfc; 
+  margin-top: 1rem; 
+}
+.variation-section-header { 
+  display: flex; 
+  align-items: baseline; 
+  gap: 1rem; 
+  margin-bottom: 0.75rem; 
+}
+.variation-section-header h4 { 
+  margin: 0; 
+  font-size: 1.05rem; 
+  font-weight: 600; 
+  color: #1e293b; 
+}
+.variation-section-header small { 
+  color: #64748b; 
+  font-size: 0.7rem; 
+  text-transform: uppercase; 
+  letter-spacing: .5px; 
+  font-weight: 600; 
+}
+.variation-card { 
+  border: 1px solid #dbe1e6; 
+  background: #ffffff; 
+  border-radius: 8px; 
+  padding: 0.75rem 0.85rem 1rem; 
+  margin-bottom: 0.85rem; 
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04); 
+}
+.variation-card-header { 
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center; 
+  margin-bottom: 0.5rem; 
+  padding-bottom: 0.4rem; 
+  border-bottom: 1px dashed #e2e8f0; 
+}
+.variation-card-header h5 { 
+  margin: 0; 
+  font-size: 0.75rem; 
+  font-weight: 600; 
+  color: #334155; 
+  letter-spacing: .3px; 
+  text-transform: uppercase; 
+}
+.variation-thumbs { display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
+.variation-thumbs .thumb { position:relative; padding:4px; background:#f1f5f9; border:1px solid #e2e8f0; border-radius:6px; display:flex; flex-direction:column; align-items:center; }
+.variation-thumbs .thumb.to-remove { border-color:#dc2626; background:#fef2f2; }
+.variation-thumbs .thumb.to-remove img { opacity:.5; }
+.variation-thumbs .thumb small { margin-top:2px; }
+
+/* Variation action buttons */
+.variation-actions { display:flex; justify-content:flex-end; gap:.5rem; flex-wrap:wrap; margin-top:.5rem; padding-top:.5rem; border-top:1px solid #e2e8f0; }
+.variation-actions .var-btn.p-button { padding:.4rem .9rem !important; font-size:.75rem !important; font-weight:600 !important; border-radius:20px !important; }
+
+/* Done button styling */
+:host ::ng-deep .done-update-btn.p-button {
+  background:#16a34a !important;
+  border:1px solid #15803d !important;
+  font-weight:600 !important;
+  letter-spacing:.3px;
+  padding:.55rem 1.25rem !important;
+  border-radius:30px !important;
+}
+:host ::ng-deep .done-update-btn.p-button:enabled:hover {
+  background:#15803d !important;
+  border-color:#166534 !important;
+}
+:host ::ng-deep .done-update-btn.p-button:disabled {
+  background:#86efac !important;
+  border-color:#6ee7b7 !important;
+  cursor:not-allowed !important;
+  opacity:1 !important;
+}
+.variation-grid .field label { 
+  font-size: 0.7rem; 
+  text-transform: uppercase; 
+  letter-spacing: .5px; 
+  color: #475569; 
+  font-weight: 600; 
+}
+
+:host ::ng-deep {
+  .p-inputtext {
+    width: 100% !important;
+    border: 2px solid #bdc3c7 !important;
+    border-radius: 6px !important;
+    padding: 0.75rem 1rem !important;
+    font-size: 1rem !important;
+    background: white !important;
+    color: #333333 !important;
+    min-height: 45px !important;
+    display: block !important;
+    margin-bottom: 4px !important;
+  }
+
+  textarea[pInputTextarea] {
+    width: 100% !important;
+    min-height: 120px !important;
+    resize: vertical !important;
+    border: 2px solid #bdc3c7 !important;
+    border-radius: 6px !important;
+    padding: 0.75rem 1rem !important;
+    font-size: 1rem !important;
+    background: white !important;
+    color: #333333 !important;
+    display: block !important;
+    margin-bottom: 4px !important;
+  }
+
+  #description,
+  #variations {
+    width: 100% !important;
+    min-height: 120px !important;
+    resize: vertical !important;
+    border: 2px solid #bdc3c7 !important;
+    border-radius: 6px !important;
+    padding: 0.75rem 1rem !important;
+  }
+}
+
+:host ::ng-deep .field {
+  /* All input fields base styling */
+  input.p-inputtext,
+  textarea.p-inputtext {
+    border: 2px solid #bdc3c7 !important;
+    border-radius: 6px !important;
+    min-height: 45px !important;
+    width: 100% !important;
+    background: white !important;
+    padding: 0.75rem 1rem !important;
+  }
+  
+  /* Specific styling for SEO Tags input */
+  #seoTags {
+    border: 2px solid #bdc3c7 !important;
+    border-radius: 6px !important;
+    min-height: 45px !important;
+    padding: 0.75rem 1rem !important;
+    width: 100% !important;
+    background: white !important;
+    font-size: 1rem !important;
+  }
+
+  /* Specific styling for Variations textarea */
+  #variations {
+    border: 2px solid #bdc3c7 !important;
+    border-radius: 6px !important;
+    min-height: 120px !important;
+    padding: 0.75rem 1rem !important;
+    width: 100% !important;
+    background: white !important;
+    font-size: 1rem !important;
+    resize: vertical !important;
+  }
+
+  /* Hover states for inputs */
+  #seoTags:hover,
+  #variations:hover,
+  input.p-inputtext:hover,
+  textarea.p-inputtext:hover {
+    border-color: #95a5a6 !important;
+  }
+
+  /* Focus states for inputs */
+  #seoTags:focus,
+  #variations:focus,
+  input.p-inputtext:focus,
+  textarea.p-inputtext:focus {
+    border-color: #2196f3 !important;
+    box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.25) !important;
+    outline: none !important;
+  }
+
+  /* Placeholder styling */
+  #seoTags::placeholder,
+  #variations::placeholder,
+  input.p-inputtext::placeholder,
+  textarea.p-inputtext::placeholder {
+    color: #95a5a6 !important;
+    opacity: 1 !important;
+  }
+  
+  /* Textarea specific styling */
+  textarea.p-inputtext {
+    min-height: 120px !important;
+  }
+
+  /* Select/Dropdown specific styling */
+  .p-select-container {
+    border: 2px solid #bdc3c7 !important;
+    border-radius: 6px !important;
+    width: 100% !important;
+  }
+
+  /* File upload styling */
+  .p-fileupload {
+    width: 100% !important;
+    
+    .p-button {
+      border: 2px solid #bdc3c7 !important;
+      width: 100% !important;
+    }
+  }
+}
+
+/* PrimeNG components styling with Bootstrap integration */
+:host ::ng-deep {
+  /* Input fields styling */
+  .p-fluid {
+    .field {
+      input[type="text"].p-inputtext,
+      textarea.p-inputtext,
+      .p-select,
+      .p-dropdown input,
+      .p-multiselect-label {
+        width: 100% !important;
+        border: 2px solid #bdc3c7 !important;
+        border-radius: 6px !important;
+        background: #ffffff !important;
+        color: #212529 !important;
+        padding: 0.75rem 1rem !important;
+        font-size: 1rem !important;
+        line-height: 1.5 !important;
+        transition: all 0.2s ease-in-out !important;
+        margin: 2px 0 !important;
+        min-height: 45px !important;
+        display: block !important;
+
+    &:hover {
+      border-color: #95a5a6 !important;
+    }
+
+    &:focus {
+      border-color: #2196f3 !important;
+      outline: 0 !important;
+      box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.25) !important;
+    }
+
+    &::placeholder {
+      color: #95a5a6 !important;
+      opacity: 1 !important;
+    }
+  }
+
+  /* File upload button styling */
+  .p-fileupload {
+    .p-button {
+      background: #2196f3 !important;
+      border: none !important;
+      color: #ffffff !important;
+      padding: 0.5rem 1rem !important;
+      border-radius: 6px !important;
+      font-weight: 500 !important;
+      transition: all 0.2s !important;
+
+      &:hover {
+        background: #1976d2 !important;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+      }
+
+      .p-button-icon {
+        margin-right: 0.5rem !important;
+      }
+    }
+  }
+
+  /* Dialog buttons (Cancel, Add) */
+  .p-dialog-footer {
+    .p-button {
+      padding: 0.5rem 1.5rem !important;
+      border-radius: 6px !important;
+      font-weight: 500 !important;
+      transition: all 0.2s !important;
+
+      /* Cancel button */
+      &.p-button-secondary {
+        background: #6c757d !important;
+        border: none !important;
+        color: #ffffff !important;
+
+        &:hover {
+          background: #5a6268 !important;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+        }
+      }
+
+      /* Add/Submit button */
+      &.p-button-primary {
+        background: #2196f3 !important;
+        border: none !important;
+        color: #ffffff !important;
+
+        &:hover {
+          background: #1976d2 !important;
+          box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+        }
+      }
+    }
+  }
+
+  /* Dropdown and Select styling */
+  .p-dropdown {
+    .p-dropdown-trigger {
+      background: #f8f9fa !important;
+      border-left: 2px solid #bdc3c7 !important;
+    }
+  }
+
+  .p-multiselect {
+    .p-multiselect-trigger {
+      background: #f8f9fa !important;
+      border-left: 2px solid #bdc3c7 !important;
+    }
+  }
+
+  /* Dropdown panels */
+  .p-dropdown-panel,
+  .p-multiselect-panel {
+    border: 2px solid #bdc3c7 !important;
+    border-radius: 6px !important;
+    background: #ffffff !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
+
+    .p-dropdown-item,
+    .p-multiselect-item {
+      padding: 0.5rem 1rem !important;
+      color: #212529 !important;
+
+      &:hover {
+        background: #f8f9fa !important;
+      }
+
+      &.p-highlight {
+        background: #e3f2fd !important;
+        color: #1976d2 !important;
+      }
+    }
+  }
+}
+  }
+}

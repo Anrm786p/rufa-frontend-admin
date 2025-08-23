@@ -1,11 +1,54 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
+import { environment } from 'src/environments/environment';
+
+export interface ApiProduct {
+  id?: string;
+  name: string;
+  description?: string;
+  category?: any;
+  subcategories?: any[];
+  variationType?: string;
+  variations?: any[];
+  imageUrl?: string;
+  price?: number;
+}
 
 @Injectable({
   providedIn: 'root',
 })
 export class ProductsService {
+  // Real backend fetch
+  fetchProducts(
+    page = 1,
+    limit = 20,
+    filters?: {
+      name?: string;
+      categoryId?: string;
+      subCategoryId?: string; // legacy single subCategory id
+      sort?: string;
+      order?: string; // asc | desc
+    }
+  ): Observable<{ data: ApiProduct[]; pagination: any }> {
+    let params = new HttpParams().set('page', page).set('limit', limit);
+    if (filters) {
+      if (filters.name) params = params.set('name', filters.name.trim());
+      if (filters.categoryId)
+        params = params.set('categoryId', filters.categoryId);
+      if (filters.subCategoryId)
+        params = params.set('subCategoryId', filters.subCategoryId);
+      if (filters.sort) params = params.set('sort', filters.sort);
+      if (filters.order) params = params.set('order', filters.order);
+    }
+    return this.http.get<{ data: ApiProduct[]; pagination: any }>(
+      `${environment.apiUrl}/products`,
+      { params }
+    );
+  }
+
+  constructor(private http: HttpClient) {}
+
   getProductsData() {
     return [
       {

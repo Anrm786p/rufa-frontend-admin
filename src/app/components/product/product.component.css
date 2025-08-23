@@ -1,0 +1,84 @@
+/* Space below fixed navbar */
+.product-container {
+	padding: 110px 1.25rem 2rem; /* adjust if navbar height changes */
+}
+
+.product-container .page-title {
+	margin: 0 0 1rem;
+	font-size: 1.75rem;
+	font-weight: 600;
+	letter-spacing: .5px;
+	color: #ef4444;
+	position: relative;
+}
+
+.product-container .page-title:after {
+	content: "";
+	position: absolute;
+	left: 0;
+	bottom: -6px;
+	width: 58px;
+	height: 4px;
+	border-radius: 4px;
+	background: linear-gradient(90deg,#ef4444,#f87171);
+}
+
+/* Toolbar layout tweaks */
+.product-container .toolbar {
+	flex-wrap: wrap;
+}
+
+/* PrimeNG table header styling */
+.product-container ::ng-deep .p-datatable .p-datatable-thead > tr > th {
+	background:linear-gradient(135deg,#f8fafc 0%,#f1f5f9 70%,#eef2f7 100%);
+	position:sticky;
+	top:0;
+	z-index:2;
+	text-align:left;
+	padding:.85rem 1rem;
+	font-weight:600;
+	color:#334155;
+	border:0;
+	box-shadow:inset 0 -1px 0 #e2e8f0,0 0 0 1px #e2e8f0;
+	transition:background .25s ease,color .25s ease, box-shadow .25s ease;
+}
+
+.product-container ::ng-deep .p-datatable .p-datatable-thead > tr > th:first-child { border-left:4px solid #ef4444; }
+.product-container ::ng-deep .p-datatable .p-datatable-thead > tr > th:hover {
+	background:linear-gradient(135deg,#fffefe 0%,#fff5f5 65%,#ffecec 100%);
+	color:#b91c1c;
+	box-shadow:inset 0 -1px 0 #fecdd3,0 0 0 1px #fecdd3;
+}
+
+/* Row hover clarity */
+.product-container ::ng-deep .p-datatable-hoverable-rows .p-datatable-tbody > tr:hover {
+	background: #fff5f5;
+	transform: translateY(-2px);
+	box-shadow: 0 2px 6px -1px rgba(239,68,68,.28),0 1px 3px -1px rgba(239,68,68,.25);
+}
+
+.product-container ::ng-deep .p-datatable-hoverable-rows .p-datatable-tbody > tr {
+	transition: background .18s ease, transform .18s ease, box-shadow .18s ease;
+}
+
+/* Accent underline */
+.product-container ::ng-deep .p-datatable .p-datatable-thead > tr > th { border-bottom:2px solid #fecdd3; }
+
+/* Variation inner table styling */
+.variation-wrapper ::ng-deep .p-datatable-wrapper {
+	background: #fbfdff;
+	border: 1px solid #e2e8f0;
+	border-radius: 6px;
+	padding: .5rem;
+}
+
+.variation-wrapper ::ng-deep table thead th {
+	background:#f1f5f9;
+	font-weight:600;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+	.product-container { padding-top: 130px; }
+	.product-container .toolbar { gap: .75rem; }
+}

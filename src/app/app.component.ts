@@ -4,12 +4,45 @@ import { NavbarComponent } from './components/navbar/navbar.component';
 import { LoaderComponent } from './components/loader/loader.component';
 import { filter } from 'rxjs';
 import { HomeComponent } from './components/home/home.component';
+import { ToastModule } from 'primeng/toast';
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-root',
-  imports: [NavbarComponent, RouterOutlet, HomeComponent, LoaderComponent],
-  templateUrl: './app.component.html',
-  styleUrl: './app.component.css',
+  standalone: true,
+  imports: [
+    NavbarComponent,
+    RouterOutlet,
+    LoaderComponent,
+    ToastModule,
+    CommonModule,
+  ],
+  template: `
+    <p-toast position="top-right"></p-toast>
+    <div *ngIf="!isLoginPage">
+      <app-navbar></app-navbar>
+    </div>
+    <div class="main-content">
+      <app-loader></app-loader>
+      <router-outlet></router-outlet>
+    </div>
+  `,
+  styles: [
+    `
+      :host {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+      }
+      :host ::ng-deep .p-toast {
+        z-index: 1000;
+      }
+      .main-content {
+        flex: 1;
+        padding: 1rem;
+      }
+    `,
+  ],
 })
 export class AppComponent implements OnInit {
   title = 'shoppingGifts';
@@ -19,8 +52,15 @@ export class AppComponent implements OnInit {
   ngOnInit() {
     this.router.events
       .pipe(filter((event) => event instanceof NavigationEnd))
-      .subscribe((event: any) => {
-        this.isLoginPage = event.url.includes('login');
+      .subscribe((event: NavigationEnd) => {
+        // Show navbar for all routes except login
+        this.isLoginPage = event.urlAfterRedirects.includes('login');
+        console.log(
+          'Current route:',
+          event.urlAfterRedirects,
+          'isLoginPage:',
+          this.isLoginPage
+        );
       });
   }
 }

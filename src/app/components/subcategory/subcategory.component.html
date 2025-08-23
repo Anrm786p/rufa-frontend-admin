@@ -1,0 +1,13 @@
+<div class="subcategory-container">
+  <app-table
+    [title]="'Subcategories'"
+    [columns]="columns"
+    [data]="subcategories"
+    [filters]="filters"
+    [showActions]="true"
+    (onAdd)="handleAdd()"
+    (onEdit)="handleEdit($event)"
+    (onDelete)="handleDelete($event)">
+  </app-table>
+  <app-add-subcategory #addSubcategoryDialog></app-add-subcategory>
+</div>

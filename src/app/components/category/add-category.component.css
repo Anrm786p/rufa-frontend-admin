@@ -1,0 +1,58 @@
+.field {
+  margin-bottom: 1.5rem;
+}
+
+:host ::ng-deep {
+  .required::after {
+    content: " *";
+    color: var(--red-500);
+  }
+
+  .p-inputtext.ng-invalid.ng-dirty {
+    border-color: var(--red-500) !important;
+  }
+
+  .p-fileupload {
+    width: 100%;
+  }
+
+  .p-fileupload.ng-invalid {
+    .p-button {
+      border-color: var(--red-500) !important;
+    }
+  }
+
+  .p-button.p-button-success {
+    background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+    border: none;
+    color: #ffffff;
+    &:hover {
+      background: linear-gradient(135deg, #27ae60 0%, #219a52 100%);
+      box-shadow: 0 4px 12px rgba(46, 204, 113, 0.3);
+      transform: translateY(-1px);
+    }
+    &:active {
+      transform: translateY(0);
+    }
+    &:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      opacity: 0.7;
+    }
+  }
+}
+
+.text-success {
+  color: var(--green-500);
+}
+
+.p-error {
+  color: var(--red-500);
+  margin-top: 0.25rem;
+  font-size: 0.875rem;
+}
+
+/* Force small text to display as block */
+.block {
+  display: block !important;
+}

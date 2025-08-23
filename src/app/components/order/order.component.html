@@ -1,0 +1,84 @@
+<div class="order-container">
+  <div class="nav-spacer"></div>
+  <h2 class="page-title">Orders</h2>
+
+  <div class="toolbar" style="display:flex; gap:1rem; align-items:center; margin-bottom:1rem; flex-wrap:wrap;">
+    <p-dropdown [options]="statusOptions"
+                optionLabel="label" optionValue="value"
+                [ngModel]="statusFilter"
+                placeholder="All Statuses"
+                (onChange)="changeStatusFilter($event.value)"
+                [style]="{'minWidth':'170px'}"></p-dropdown>
+    <input pInputText type="text" name="searchName" placeholder="Search customer name (Enter)" [value]="searchName" (input)="searchName=$any($event.target).value" (keyup.enter)="onNameEnter()" style="width:230px" />
+    <input pInputText type="text" name="searchPhone" placeholder="Search phone (Enter)" [value]="searchPhone" (input)="searchPhone=$any($event.target).value" (keyup.enter)="onPhoneEnter()" style="width:180px" />
+    <button pButton label="Clear" class="p-button-text" (click)="clearFilters()"></button>
+    <span class="flex-grow-1"></span>
+  </div>
+
+  <p-table [value]="orders" dataKey="id" [paginator]="true" [rows]="rows" [totalRecords]="totalRecords" [lazy]="true" (onPage)="onPageChange($event)" [loading]="loading" responsiveLayout="scroll" [rowHover]="true" styleClass="p-datatable-gridlines custom-table">
+    <ng-template pTemplate="header">
+      <tr>
+        <th *ngFor="let col of columns">{{ col.header }}</th>
+  <th class="actions-col">Actions</th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-row>
+      <tr>
+        <td>{{ row.id }}</td>
+        <td>{{ row.customerName }}</td>
+        <td>{{ row.customerPhone }}</td>
+        <td>{{ row.customerCity }}</td>
+        <td>
+          <span class="status-pill status-{{ row.status }}">{{ row.status }}</span>
+        </td>
+        <td>{{ row.totalBill | number:'1.2-2' }}</td>
+        <td>{{ row.isCOD ? 'COD' : 'Prepaid' }}</td>
+        <td>{{ row.createdAt | date:'short' }}</td>
+  <td class="actions-cell">
+          <button pButton icon="pi pi-eye" class="p-button-text p-button-rounded p-button-sm" (click)="handleEdit(row)" title="View"></button>
+          <button pButton icon="pi pi-refresh" class="p-button-text p-button-rounded p-button-sm" (click)="openStatusDialog(row)" title="Update Status"></button>
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+
+  <!-- View Order Dialog -->
+  <p-dialog [(visible)]="viewDialogVisible" header="Order Details" [modal]="true" [style]="{width:'620px'}" (onHide)="viewDialogVisible=false" [contentStyle]="{'background':'#ffffff'}" [maskStyle]="{'background':'rgba(15,23,42,0.55)'}" styleClass="order-dialog">
+    <div *ngIf="!viewingDetail">Loading...</div>
+    <div *ngIf="viewingDetail">
+      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:.75rem; margin-bottom:1rem; font-size:.8rem;">
+        <div><strong>ID:</strong> {{ viewingDetail.id }}</div>
+        <div><strong>Status:</strong> {{ viewingDetail.status }}</div>
+        <div><strong>Customer:</strong> {{ viewingDetail.customerName }}</div>
+        <div><strong>Phone:</strong> {{ viewingDetail.customerPhone }}</div>
+        <div><strong>City:</strong> {{ viewingDetail.customerCity }}</div>
+        <div><strong>Total:</strong> {{ viewingDetail.totalBill | number:'1.2-2' }}</div>
+        <div><strong>COD:</strong> {{ viewingDetail.isCOD }}</div>
+        <div><strong>Tracking:</strong> {{ viewingDetail.trackingId || '-' }}</div>
+      </div>
+      <h4 style="margin:.5rem 0 .5rem;">Items</h4>
+      <div class="variation-wrapper">
+        <p-table [value]="viewingDetail.items" styleClass="p-datatable-sm">
+          <ng-template pTemplate="header">
+            <tr>
+              <th>Name</th>
+              <th>Variation</th>
+              <th>Qty</th>
+              <th>Price</th>
+            </tr>
+          </ng-template>
+            <ng-template pTemplate="body" let-i>
+              <tr>
+                <td>{{ i.productName }}</td>
+                <td>{{ i.variationType }} {{ i.variationValue }}</td>
+                <td>{{ i.quantity }}</td>
+                <td>{{ i.price | number:'1.2-2' }}</td>
+              </tr>
+            </ng-template>
+        </p-table>
+      </div>
+    </div>
+  </p-dialog>
+
+  <app-order-status-dialog #statusDialog [canComplete]="isSuperAdmin" (confirmed)="onStatusConfirmed($event)"></app-order-status-dialog>
+</div>

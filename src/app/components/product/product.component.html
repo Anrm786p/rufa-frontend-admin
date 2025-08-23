@@ -1,11 +1,52 @@
-<app-table
-  [title]="'Product List'"
-  [data]="products"
-  [columns]="[
-    { field: 'image', header: 'Image', isImage: true },
-    { field: 'name', header: 'Name' },
-    { field: 'price', header: 'Price' },
-    { field: 'category', header: 'Category' }
-  ]"
-  [showActions]="true">
-</app-table>
+<div class="product-container">
+  <div class="nav-spacer"></div>
+  <h2 class="page-title">Products</h2>
+  <div class="toolbar" style="display:flex; gap:1rem; align-items:center; margin-bottom:1rem; flex-wrap:wrap;">
+    <!-- Category filter (all categories) -->
+  <p-dropdown [options]="categoryOptions" optionLabel="name" optionValue="id" [(ngModel)]="selectedCategoryId" placeholder="All Categories" name="categoryFilter" (onChange)="onCategoryChange()" [style]="{'minWidth':'200px'}"></p-dropdown>
+    <!-- Subcategory filter appears only after category selection -->
+    <p-dropdown *ngIf="selectedCategoryId" [options]="subCategoryOptions" optionLabel="name" optionValue="id" [(ngModel)]="selectedSubCategoryId" placeholder="All Subcategories" name="subCategoryFilter" (onChange)="onSubCategoryChange()" [disabled]="subcategoriesLoading" [style]="{'minWidth':'200px'}">
+      <ng-template pTemplate="footer" *ngIf="subcategoriesLoading">
+        <div style="padding:.5rem; font-size:.75rem; opacity:.7">Loading...</div>
+      </ng-template>
+    </p-dropdown>
+  <input pInputText type="text" placeholder="Search by name (press Enter)" [(ngModel)]="searchText" (keyup.enter)="onSearchEnter()" style="width:220px" />
+    <button pButton label="Clear" class="p-button-text" (click)="clearFilters()"></button>
+    <span class="flex-grow-1"></span>
+    <button pButton icon="pi pi-plus" class="p-button-success" (click)="handleAdd()" label="Add"></button>
+  </div>
+
+  <p-table [value]="products" dataKey="id" [paginator]="true" [rows]="limit" [totalRecords]="total" [lazy]="true" (onPage)="onPageChange($event)" [loading]="loading" responsiveLayout="scroll" [rowHover]="true" styleClass="p-datatable-gridlines custom-table">
+    <ng-template pTemplate="header">
+      <tr>
+  <th>Image</th>
+        <th>Name</th>
+        <th>Category</th>
+        <th>Subcategories</th>
+        <th>Price Range</th>
+        <th>Variation Type</th>
+        <th style="width:6rem">Actions</th>
+      </tr>
+    </ng-template>
+
+  <ng-template pTemplate="body" let-row>
+  <tr>
+      <td>
+        <img *ngIf="row.image" [src]="row.image" alt="img" width="55" height="55" style="border-radius:8px; object-fit:cover" />
+      </td>
+      <td>{{ row.name }}</td>
+      <td>{{ row.categoryName }}</td>
+      <td>{{ row.subcategoriesDisplay }}</td>
+      <td>{{ row.priceDisplay }}</td>
+      <td>{{ row.variationType }}</td>
+      <td>
+  <button pButton icon="pi pi-eye" class="p-button-text p-button-rounded p-button-sm" (click)="viewProduct(row)"></button>
+  <button pButton icon="pi pi-pencil" class="p-button-text p-button-rounded p-button-sm" (click)="handleEdit(row)"></button>
+        <button pButton icon="pi pi-trash" class="p-button-text p-button-rounded p-button-sm p-button-danger" (click)="handleDelete(row)"></button>
+      </td>
+    </tr>
+  </ng-template>
+  </p-table>
+
+  <app-add-product #addProductDialog (productAdded)="onProductAdded($event)" (closed)="loadProducts()"></app-add-product>
+</div>

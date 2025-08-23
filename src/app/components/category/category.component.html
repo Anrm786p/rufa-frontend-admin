@@ -1,0 +1,13 @@
+<div class="category-container">
+  <app-table
+    [title]="'Categories'"
+    [columns]="columns"
+    [data]="categories"
+    [filters]="filters"
+    [showActions]="true"
+    (onAdd)="handleAdd()"
+    (onEdit)="handleEdit($event)"
+    (onDelete)="handleDelete($event)">
+  </app-table>
+  <app-add-category #addCategoryDialog></app-add-category>
+</div>

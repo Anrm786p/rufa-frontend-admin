@@ -1,0 +1,165 @@
+:host ::ng-deep .p-dialog {
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  width: 60vw !important;
+  max-width: 800px !important;
+  margin: auto;
+}
+
+/* Dialog header */
+:host ::ng-deep .p-dialog .p-dialog-header {
+  background: var(--bs-light);
+  font-weight: 600;
+  font-size: 1.2rem;
+  border-bottom: 1px solid var(--bs-border-color);
+  padding: 1rem 1.5rem;
+  width: 100%;
+  flex-shrink: 0;
+}
+
+/* Dialog content area */
+:host ::ng-deep .p-dialog .p-dialog-content {
+  background: #ffffff;
+  padding: 1.5rem;
+  border: none;
+  width: 100%;
+  height: auto;
+  overflow-y: visible;
+}
+
+.dialog-content {
+  width: 100%;
+}
+
+/* Dialog footer */
+:host ::ng-deep .p-dialog .p-dialog-footer {
+  background: #f8f9fa;
+  border-top: 1px solid #dee2e6;
+  padding: 1.25rem;
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+}
+
+/* Form fields */
+:host ::ng-deep {
+  .field {
+    margin-bottom: 1.5rem;
+    position: relative;
+    width: 100%;
+  }
+
+  .field label {
+    font-weight: 500;
+    margin-bottom: 0.75rem;
+    display: block;
+    color: #333;
+    font-size: 0.95rem;
+  }
+
+  .p-inputtext {
+    width: 100% !important;
+    border: 2px solid #bdc3c7 !important;
+    border-radius: 6px !important;
+    padding: 0.75rem 1rem !important;
+    font-size: 1rem !important;
+    background: white !important;
+    color: #333333 !important;
+    min-height: 45px !important;
+    display: block !important;
+    margin-bottom: 4px !important;
+  }
+
+  textarea.p-inputtextarea {
+    min-height: 120px !important;
+    resize: vertical !important;
+  }
+
+  .p-input-wrapper {
+    display: block !important;
+    width: 100% !important;
+  }
+
+  .p-fileupload {
+    width: 100% !important;
+
+    .p-button {
+      width: 100% !important;
+      margin: 0 !important;
+    }
+  }
+
+  .p-fileupload-basic {
+    width: 100% !important;
+    max-width: none !important;
+  }
+}
+
+/* Footer buttons styling */
+:host ::ng-deep .p-dialog-footer {
+  .p-button {
+    min-width: 130px !important;
+    padding: 0.875rem 1.75rem !important;
+    border-radius: 8px !important;
+    font-weight: 600 !important;
+    font-size: 1rem !important;
+    transition: all 0.3s ease !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.5rem !important;
+  }
+
+  .btn-outline-secondary {
+    border: 1px solid var(--bs-gray-400) !important;
+    color: var(--bs-gray-700) !important;
+    background: transparent !important;
+    font-weight: 500 !important;
+    padding: 0.75rem 1.5rem !important;
+    font-size: 1rem !important;
+    min-width: 130px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    transition: all 0.3s ease !important;
+    border-radius: 6px !important;
+
+    &:hover {
+      background: var(--bs-gray-200) !important;
+      border-color: var(--bs-gray-500) !important;
+      color: var(--bs-gray-800) !important;
+    }
+  }
+
+  .btn-success {
+    background: var(--bs-success) !important;
+    border-color: var(--bs-success) !important;
+    color: white !important;
+    font-weight: 500 !important;
+    padding: 0.75rem 1.5rem !important;
+    font-size: 1rem !important;
+    min-width: 130px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    transition: all 0.3s ease !important;
+    border-radius: 6px !important;
+
+    &:hover:not(.disabled) {
+      background: var(--bs-success-dark, #157347) !important;
+      border-color: var(--bs-success-dark, #157347) !important;
+      box-shadow: 0 4px 12px rgba(25, 135, 84, 0.3) !important;
+      transform: translateY(-1px) !important;
+    }
+
+    &:active:not(.disabled) {
+      transform: translateY(0) !important;
+    }
+
+    &.disabled {
+      opacity: 0.65 !important;
+      cursor: not-allowed !important;
+      pointer-events: none !important;
+    }
+  }
+}

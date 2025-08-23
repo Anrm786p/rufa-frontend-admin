@@ -1,38 +1,113 @@
 
 
-<div class="home">
-
-
-    <div class="categories">
-
-        <div class="category" *ngFor="let category of categories">
-
-            <div class="category-icon">
-
-                <div>
-                <img [src]="category.categoryImage" alt="my-icon"/>
-                 </div>
-
-
+<div class="dashboard-wrapper" *ngIf="!loading && !error; else loadingOrError">
+    <div class="kpi-grid">
+    <div class="kpi-card" *ngFor="let b of bucketsOrder">
+            <div class="kpi-header">
+                <h4>{{ b.label }}</h4>
+                <small class="date-range">{{ bucket(b.key).range.startDate }} → {{ bucket(b.key).range.endDate }}</small>
             </div>
-            <div class="category-title">
-
-                <p>
-                    <span [innerHTML]="category.categoryName"></span>
-                    <br>
-                    <span>{{ category.categoryItemsNumber }} Items</span>
-                  </p>
-                  
-
+            <div class="kpi-body">
+                <div class="metric">
+                    <span class="label">Sales</span>
+                    <span class="value">{{ formatCurrency(bucket(b.key).sales) }}</span>
+                </div>
+                <div class="metric">
+                    <span class="label">Orders</span>
+                    <span class="value">{{ formatNumber(bucket(b.key).orderCount) }}</span>
+                </div>
+                <div class="metric">
+                    <span class="label">Units</span>
+                    <span class="value">{{ formatNumber(bucket(b.key).productCount) }}</span>
+                </div>
+                <div class="metric">
+                    <span class="label">Profit</span>
+                    <span class="value">{{ formatCurrency(bucket(b.key).profit) }}</span>
+                </div>
+                <div class="metric" *ngIf="bucket(b.key).expense">
+                    <span class="label">Expense</span>
+                    <span class="value">{{ formatCurrency(bucket(b.key).expense) }}</span>
+                </div>
+                <div class="metric emphasis">
+                    <span class="label">Net Profit</span>
+                    <span class="value">{{ formatCurrency(bucket(b.key).netProfit) }}</span>
+                </div>
             </div>
-
-
-
         </div>
-
-
     </div>
 
+    <div class="tops-section" *ngIf="hasTops()">
+    <h3 class="section-title">Top Sellers (All Time)</h3>
+            <div class="tops-grid">
+                <div class="tops-list" *ngFor="let type of topTypes">
+                    <h5 class="tops-heading">{{ type | titlecase }}</h5>
+                    <table class="tops-table" *ngIf="topEntries('allTime', type).length; else noneAll">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Qty</th>
+                            <th>Orders</th>
+                            <th>Revenue</th>
+                            <th>Profit</th>
+                            <th>Last Sold</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                            <tr *ngFor="let row of topEntries('allTime', type) | slice:0:10">
+                            <td>{{ row.name }}</td>
+                            <td>{{ row.quantitySold }}</td>
+                            <td>{{ row.ordersCount }}</td>
+                            <td>{{ formatCurrency(row.revenue) }}</td>
+                            <td>{{ formatCurrency(row.profit) }}</td>
+                            <td>{{ row.lastSoldAt ? (row.lastSoldAt | date:'yyyy-MM-dd') : '—' }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <ng-template #noneAll>
+                    <div class="empty">No data</div>
+                </ng-template>
+            </div>
+        </div>
 
-<!--...........................main background-->
+    <h3 class="section-title alt">Top Sellers (Last 45 Days)</h3>
+            <div class="tops-grid">
+                <div class="tops-list" *ngFor="let type of topTypes">
+                    <h5 class="tops-heading">{{ type | titlecase }}</h5>
+                    <table class="tops-table" *ngIf="topEntries('last45Days', type).length; else noneRecent">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Qty</th>
+                            <th>Orders</th>
+                            <th>Revenue</th>
+                            <th>Profit</th>
+                            <th>Last Sold</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                            <tr *ngFor="let row of topEntries('last45Days', type) | slice:0:10">
+                            <td>{{ row.name }}</td>
+                            <td>{{ row.quantitySold }}</td>
+                            <td>{{ row.ordersCount }}</td>
+                            <td>{{ formatCurrency(row.revenue) }}</td>
+                            <td>{{ formatCurrency(row.profit) }}</td>
+                            <td>{{ row.lastSoldAt ? (row.lastSoldAt | date:'yyyy-MM-dd') : '—' }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <ng-template #noneRecent>
+                    <div class="empty">No data</div>
+                </ng-template>
+            </div>
+        </div>
+    </div>
+</div>
+
+<ng-template #loadingOrError>
+    <div class="loading-state" *ngIf="loading">
+        <p-progressSpinner strokeWidth="4" styleClass="sm-spinner"></p-progressSpinner>
+        <div>Loading dashboard...</div>
+    </div>
+    <div class="error-state" *ngIf="error">{{ error }}</div>
+</ng-template>
 
