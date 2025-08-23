@@ -54,23 +54,4 @@
 :host ::ng-deep .order-dialog .p-dialog-header .p-dialog-header-close { top:50%; transform:translateY(-50%); margin:0; }
 :host ::ng-deep .order-dialog .p-dialog-header-icon:focus-visible { box-shadow:0 0 0 2px #ef4444; }
 
-/* Actions column: keep compact & stable on narrow screens */
-.order-container ::ng-deep th.actions-col { 
-  width:72px !important; min-width:72px; max-width:74px; 
-  text-align:center; padding:.55rem .25rem;
-}
-.order-container ::ng-deep td.actions-cell { 
-  width:72px; min-width:72px; max-width:74px; 
-  padding:.35rem .2rem; 
-  display:flex; align-items:center; justify-content:center; gap:.25rem; 
-  white-space:nowrap; 
-}
-.order-container ::ng-deep td.actions-cell .p-button { 
-  padding:.35rem; width:28px; height:28px; 
-}
-.order-container ::ng-deep td.actions-cell .p-button .p-button-icon { font-size:.85rem; }
-
-@media (max-width: 640px) {
-  .order-container ::ng-deep th.actions-col { position:sticky; right:0; background:#f8fafc; box-shadow:-1px 0 0 #e2e8f0; }
-  .order-container ::ng-deep td.actions-cell { position:sticky; right:0; background:#ffffff; box-shadow:-1px 0 0 #e2e8f0; }
-}
+/* (Removed custom actions column styles to let it size like other columns) */

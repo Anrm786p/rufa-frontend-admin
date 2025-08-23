@@ -19,7 +19,7 @@
     <ng-template pTemplate="header">
       <tr>
         <th *ngFor="let col of columns">{{ col.header }}</th>
-  <th class="actions-col">Actions</th>
+  <th>Actions</th>
       </tr>
     </ng-template>
     <ng-template pTemplate="body" let-row>
@@ -34,7 +34,7 @@
         <td>{{ row.totalBill | number:'1.2-2' }}</td>
         <td>{{ row.isCOD ? 'COD' : 'Prepaid' }}</td>
         <td>{{ row.createdAt | date:'short' }}</td>
-  <td class="actions-cell">
+  <td>
           <button pButton icon="pi pi-eye" class="p-button-text p-button-rounded p-button-sm" (click)="handleEdit(row)" title="View"></button>
           <button pButton icon="pi pi-refresh" class="p-button-text p-button-rounded p-button-sm" (click)="openStatusDialog(row)" title="Update Status"></button>
         </td>
