@@ -31,7 +31,9 @@ import { ButtonModule } from 'primeng/button';
         <button
           *ngIf="showSubmit"
           type="button"
-          [class]="'btn btn-success ' + (isSubmitDisabled ? 'disabled' : '')"
+          [class]="
+            submitStyleClass + ' ' + (isSubmitDisabled ? 'disabled' : '')
+          "
           [disabled]="isSubmitDisabled"
           (click)="onSubmit()"
         >
@@ -50,6 +52,7 @@ export class SharedDialogComponent {
   @Input() showSubmit: boolean = true;
   @Input() submitType: 'button' | 'submit' = 'submit';
   @Input() isSubmitDisabled: boolean = false;
+  @Input() submitStyleClass: string = 'btn btn-success';
 
   @Output() visibleChange = new EventEmitter<boolean>();
   @Output() cancel = new EventEmitter<void>();

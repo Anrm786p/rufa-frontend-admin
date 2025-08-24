@@ -49,6 +49,10 @@ export class ProductsService {
 
   constructor(private http: HttpClient) {}
 
+  deleteProduct(productId: string) {
+    return this.http.delete(`${environment.apiUrl}/products/${productId}`);
+  }
+
   getProductsData() {
     return [
       {

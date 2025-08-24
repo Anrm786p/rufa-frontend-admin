@@ -42,11 +42,31 @@
       <td>
   <button pButton icon="pi pi-eye" class="p-button-text p-button-rounded p-button-sm" (click)="viewProduct(row)"></button>
   <button pButton icon="pi pi-pencil" class="p-button-text p-button-rounded p-button-sm" (click)="handleEdit(row)"></button>
-        <button pButton icon="pi pi-trash" class="p-button-text p-button-rounded p-button-sm p-button-danger" (click)="handleDelete(row)"></button>
+        <button pButton 
+                [icon]="deletingIds.has(row.id) ? 'pi pi-spin pi-spinner' : 'pi pi-trash'" 
+                class="p-button-text p-button-rounded p-button-sm p-button-danger" 
+                (click)="openDeleteDialog(row)" 
+                [disabled]="deletingIds.has(row.id)"></button>
       </td>
     </tr>
   </ng-template>
   </p-table>
 
   <app-add-product #addProductDialog (productAdded)="onProductAdded($event)" (closed)="loadProducts()"></app-add-product>
+
+  <!-- Delete Confirmation Dialog -->
+  <app-shared-dialog
+    [title]="'Delete Product'"
+    [(visible)]="showDeleteDialog"
+    [submitLabel]="deleteInProgress ? 'Deleting...' : 'Delete'"
+    [cancelLabel]="'Cancel'"
+  submitStyleClass="btn btn-danger"
+    [isSubmitDisabled]="deleteInProgress"
+    (cancel)="cancelDelete()"
+    (submit)="confirmDelete()"
+  >
+    <div *ngIf="productPendingDelete">
+      <p>Are you sure you want to delete <strong>{{ productPendingDelete.name }}</strong>? This action cannot be undone.</p>
+    </div>
+  </app-shared-dialog>
 </div>

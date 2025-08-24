@@ -3,10 +3,10 @@ import { CommonModule } from '@angular/common';
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { DropdownModule } from 'primeng/dropdown';
-import { CardModule } from 'primeng/card';
 import { InputTextModule } from 'primeng/inputtext';
 import { FormsModule } from '@angular/forms';
 import { AddProductComponent } from './add-product.component';
+import { SharedDialogComponent } from '../shared/dialog/shared-dialog.component';
 import { ProductsService, ApiProduct } from '../../services/products.service';
 import { CategoryService, Category } from '../../services/category.service';
 import {
@@ -14,6 +14,7 @@ import {
   Subcategory,
 } from '../../services/subcategory.service';
 import { environment } from 'src/environments/environment';
+import { SharedMessageService } from '../../services/message.service';
 
 @Component({
   selector: 'app-product',
@@ -22,11 +23,11 @@ import { environment } from 'src/environments/environment';
     CommonModule,
     TableModule,
     ButtonModule,
-  DropdownModule,
-  CardModule,
+    DropdownModule,
     InputTextModule,
     FormsModule,
     AddProductComponent,
+    SharedDialogComponent,
   ],
   providers: [ProductsService],
   templateUrl: './product.component.html',
@@ -50,11 +51,16 @@ export class ProductComponent implements OnInit {
   searchText = '';
   selectedCategoryId: string = '';
   selectedSubCategoryId: string = '';
+  deletingIds = new Set<string>();
+  showDeleteDialog = false;
+  productPendingDelete: any = null;
+  deleteInProgress = false;
 
   constructor(
     private productsService: ProductsService,
     private categoryService: CategoryService,
-    private subcategoryService: SubcategoryService
+    private subcategoryService: SubcategoryService,
+    private msg: SharedMessageService
   ) {}
 
   ngOnInit() {
@@ -87,6 +93,7 @@ export class ProductComponent implements OnInit {
         error: (err) => {
           console.error('Failed to load products', err);
           this.loading = false;
+          this.msg.showMessage('Error', 'Failed to load products', 'error');
         },
       });
   }
@@ -249,11 +256,49 @@ export class ProductComponent implements OnInit {
   handleEdit(row: any) {
     this.addProductDialog.openDialogEdit(row);
   }
-  handleDelete(row: any) {
-    /* TODO delete */
+  openDeleteDialog(row: any) {
+    if (!row?.id) return;
+    this.productPendingDelete = row;
+    this.showDeleteDialog = true;
+  }
+
+  cancelDelete() {
+    if (this.deleteInProgress) return; // block closing while in-flight
+    this.showDeleteDialog = false;
+    this.productPendingDelete = null;
+  }
+
+  confirmDelete() {
+    const row = this.productPendingDelete;
+    if (!row?.id || this.deleteInProgress) return;
+    const id = row.id;
+    this.deleteInProgress = true;
+    this.deletingIds.add(id);
+    this.productsService.deleteProduct(id).subscribe({
+      next: () => {
+        this.products = this.products.filter((p) => p.id !== id);
+        this.total = Math.max(0, this.total - 1);
+        this.deletingIds.delete(id);
+        this.deleteInProgress = false;
+        this.showDeleteDialog = false;
+        this.productPendingDelete = null;
+        this.msg.showMessage(
+          'Deleted',
+          'Product deleted successfully',
+          'success'
+        );
+      },
+      error: (err) => {
+        console.error('Failed to delete product', err);
+        this.deletingIds.delete(id);
+        this.deleteInProgress = false;
+        this.msg.showMessage('Error', 'Failed to delete product', 'error');
+      },
+    });
   }
 
   onProductAdded(_: any) {
     this.loadProducts();
+    this.msg.showMessage('Success', 'Product added', 'success');
   }
 }

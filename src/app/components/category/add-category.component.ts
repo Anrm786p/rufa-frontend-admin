@@ -37,6 +37,7 @@ export class AddCategoryComponent {
   editId: string | null = null;
   currentImageUrl: string | null = null;
   imageLoadError: boolean = false;
+  existingCategories: Category[] = [];
 
   constructor(
     private fb: FormBuilder,
@@ -46,6 +47,47 @@ export class AddCategoryComponent {
       name: ['', Validators.required],
       image: [null],
     });
+    // preload categories for uniqueness check
+    this.loadCategories();
+    this.addCategoryForm
+      .get('name')
+      ?.valueChanges.subscribe(() => this.applyNameUniqueness());
+  }
+
+  private loadCategories() {
+    this.categoryService.getCategories().subscribe({
+      next: (cats) => {
+        this.existingCategories = cats;
+        this.applyNameUniqueness();
+      },
+      error: (e) =>
+        console.error('Failed to load categories for uniqueness', e),
+    });
+  }
+
+  private applyNameUniqueness() {
+    const ctrl = this.addCategoryForm.get('name');
+    if (!ctrl) return;
+    const raw = (ctrl.value || '').trim().toLowerCase();
+    if (!raw) {
+      if (ctrl.hasError('duplicate')) {
+        const errs = { ...ctrl.errors };
+        delete errs['duplicate'];
+        ctrl.setErrors(Object.keys(errs).length ? errs : null);
+      }
+      return;
+    }
+    const exists = this.existingCategories.some((c) => {
+      if (this.isEditMode && this.editId === c.id) return false; // allow original
+      return c.name.trim().toLowerCase() === raw;
+    });
+    const currentErrors = ctrl.errors || {};
+    if (exists) {
+      ctrl.setErrors({ ...currentErrors, duplicate: true });
+    } else if (currentErrors['duplicate']) {
+      const { duplicate, ...rest } = currentErrors as any;
+      ctrl.setErrors(Object.keys(rest).length ? rest : null);
+    }
   }
 
   openDialog(category?: Category) {

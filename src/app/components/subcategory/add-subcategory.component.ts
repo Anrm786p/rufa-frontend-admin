@@ -276,6 +276,8 @@ export class AddSubcategoryComponent {
   currentImageUrl: string | null = null;
   imageLoadError: boolean = false;
   categories: Category[] = [];
+  existingSubcategories: { name: string; id: string; categoryId: string }[] =
+    [];
 
   constructor(
     private fb: FormBuilder,
@@ -288,6 +290,13 @@ export class AddSubcategoryComponent {
       image: [null],
     });
     this.loadCategories();
+    this.loadAllSubcategories();
+    this.addSubcategoryForm
+      .get('name')
+      ?.valueChanges.subscribe(() => this.applyNameUniqueness());
+    this.addSubcategoryForm
+      .get('categoryId')
+      ?.valueChanges.subscribe(() => this.applyNameUniqueness());
   }
 
   private loadCategories() {
@@ -299,6 +308,49 @@ export class AddSubcategoryComponent {
         console.error('Error loading categories:', error);
       },
     });
+  }
+
+  private loadAllSubcategories() {
+    this.subcategoryService.getSubcategories().subscribe({
+      next: (subs) => {
+        this.existingSubcategories = subs.map((s) => ({
+          name: s.name,
+          id: s.id,
+          categoryId: s.categoryId,
+        }));
+        this.applyNameUniqueness();
+      },
+      error: (e) =>
+        console.error('Failed to load subcategories for uniqueness', e),
+    });
+  }
+
+  private applyNameUniqueness() {
+    const nameCtrl = this.addSubcategoryForm.get('name');
+    const catCtrl = this.addSubcategoryForm.get('categoryId');
+    if (!nameCtrl || !catCtrl) return;
+    const rawName = (nameCtrl.value || '').trim().toLowerCase();
+    const catId = catCtrl.value;
+    if (!rawName || !catId) {
+      // clear duplicate error if present
+      if (nameCtrl.hasError('duplicate')) {
+        const errs = { ...nameCtrl.errors };
+        delete errs['duplicate'];
+        nameCtrl.setErrors(Object.keys(errs).length ? errs : null);
+      }
+      return;
+    }
+    const exists = this.existingSubcategories.some((s) => {
+      if (this.isEditMode && this.editId === s.id) return false;
+      return s.categoryId === catId && s.name.trim().toLowerCase() === rawName;
+    });
+    const currentErrors = nameCtrl.errors || {};
+    if (exists) {
+      nameCtrl.setErrors({ ...currentErrors, duplicate: true });
+    } else if (currentErrors['duplicate']) {
+      const { duplicate, ...rest } = currentErrors as any;
+      nameCtrl.setErrors(Object.keys(rest).length ? rest : null);
+    }
   }
 
   openDialog(subcategory?: any) {

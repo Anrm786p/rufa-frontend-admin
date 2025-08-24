@@ -90,6 +90,10 @@ export class AddProductComponent {
         }
       }
     });
+    // Watch variation name fields for duplicates
+    this.addProductForm
+      .get('variations')
+      ?.valueChanges.subscribe(() => this.applyVariationNameUniqueness());
   }
 
   // Variation FormGroup factory
@@ -119,6 +123,7 @@ export class AddProductComponent {
   addVariation() {
     if (this.addProductForm.get('variationType')?.value === 'single') return; // block in single variation mode
     this.variationsArray.push(this.createVariationGroup());
+    this.applyVariationNameUniqueness();
   }
 
   removeVariation(index: number) {
@@ -128,6 +133,7 @@ export class AddProductComponent {
       if (this.mode === 'edit' && existingId)
         this.removedVariationIds.push(existingId);
       this.variationsArray.removeAt(index);
+      this.applyVariationNameUniqueness();
     }
   }
 
@@ -236,6 +242,7 @@ export class AddProductComponent {
       this.variationsArray.removeAt(this.variationsArray.length - 1);
     if (!this.variationsArray.length)
       this.variationsArray.push(this.createVariationGroup());
+    this.applyVariationNameUniqueness();
     this.displayDialog = true;
   }
 
@@ -283,6 +290,7 @@ export class AddProductComponent {
     });
     if (!this.variationsArray.length)
       this.variationsArray.push(this.createVariationGroup());
+    this.applyVariationNameUniqueness();
     const categoryId =
       product.categoryId || product.category?._id || product.category?.id || '';
     const desiredSubIds: string[] = (product.subcategories || [])
@@ -424,6 +432,8 @@ export class AddProductComponent {
       .subscribe({
         next: (resp: any) => {
           this.currentProduct = { ...this.currentProduct, ...resp };
+          // Auto-close dialog after successful product info save in edit mode
+          this.closeDialog();
         },
         error: (err) => console.error('Error updating product info', err),
       });
@@ -558,6 +568,8 @@ export class AddProductComponent {
             if (!Array.isArray(this.currentProduct.variations))
               this.currentProduct.variations = [];
             this.currentProduct.variations[index] = resp;
+            // Close dialog after successful new variation creation
+            this.closeDialog();
           },
           error: (err) => console.error('Error creating variation', err),
         });
@@ -608,6 +620,8 @@ export class AddProductComponent {
               imgCtrl.updateValueAndValidity({ emitEvent: false });
             }
           }
+          // Close dialog after successful variation update
+          this.closeDialog();
         },
         error: (err) => console.error('Error saving variation', err),
       });
@@ -723,6 +737,8 @@ export class AddProductComponent {
     if (!id) {
       this.variationsArray.removeAt(index);
       this.currentProduct.variations.splice(index, 1);
+      // Close dialog after deleting a new (unsaved) variation
+      this.closeDialog();
       return;
     }
     this.http
@@ -731,6 +747,8 @@ export class AddProductComponent {
         next: () => {
           this.variationsArray.removeAt(index);
           this.currentProduct.variations.splice(index, 1);
+          // Close dialog after successful deletion of existing variation
+          this.closeDialog();
         },
         error: (err) => console.error('Error deleting variation', err),
       });
@@ -743,11 +761,45 @@ export class AddProductComponent {
     if (!Array.isArray(this.currentProduct.variations))
       this.currentProduct.variations = [];
     this.currentProduct.variations.push({});
+    this.applyVariationNameUniqueness();
   }
 
   persistedVariationCount(): number {
     return (this.currentProduct?.variations || []).filter(
       (v: any) => v && (v.id || v._id || v.variationId)
     ).length;
+  }
+
+  private applyVariationNameUniqueness() {
+    const namesMap: { [lower: string]: number[] } = {};
+    this.variationsArray.controls.forEach((ctrl, idx) => {
+      const nameCtrl = (ctrl as FormGroup).get('name');
+      const raw = (nameCtrl?.value || '').trim().toLowerCase();
+      if (!raw) {
+        if (nameCtrl?.hasError('duplicate')) {
+          const errs = { ...(nameCtrl.errors || {}) };
+          delete errs['duplicate'];
+          nameCtrl.setErrors(Object.keys(errs).length ? errs : null);
+        }
+        return;
+      }
+      if (!namesMap[raw]) namesMap[raw] = [];
+      namesMap[raw].push(idx);
+    });
+    // Apply errors
+    Object.entries(namesMap).forEach(([_, indices]) => {
+      const dup = indices.length > 1;
+      indices.forEach((i) => {
+        const nameCtrl = (this.variationsArray.at(i) as FormGroup).get('name');
+        if (!nameCtrl) return;
+        const currentErrors = nameCtrl.errors || {};
+        if (dup) {
+          nameCtrl.setErrors({ ...currentErrors, duplicate: true });
+        } else if (currentErrors['duplicate']) {
+          const { duplicate, ...rest } = currentErrors as any;
+          nameCtrl.setErrors(Object.keys(rest).length ? rest : null);
+        }
+      });
+    });
   }
 }
