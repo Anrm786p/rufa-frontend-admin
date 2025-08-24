@@ -32,6 +32,7 @@ export class AddCategoryComponent {
   displayDialog: boolean = false;
   addCategoryForm: FormGroup;
   selectedImage: File | null = null;
+  imageError: string | null = null;
   isEditMode: boolean = false;
   editId: string | null = null;
   currentImageUrl: string | null = null;
@@ -81,24 +82,29 @@ export class AddCategoryComponent {
   }
 
   onImageUpload(event: any) {
-    console.log('Image upload event:', event);
+    this.imageError = null;
     if (event && event.files && event.files.length > 0) {
-      const file = event.files[0];
-      console.log('Selected file:', file);
+      const file = event.files[0] as File;
+      const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+      const maxBytes = 1024 * 1024; // 1 MB
+      if (!validTypes.includes(file.type)) {
+        this.imageError = 'Only JPG, JPEG, PNG or WEBP images are allowed';
+        return;
+      }
+      if (file.size > maxBytes) {
+        this.imageError = 'Image must be 1MB or smaller';
+        return;
+      }
       this.selectedImage = file;
       this.addCategoryForm.patchValue({ image: file });
       this.addCategoryForm.markAsDirty();
-      console.log('Form after image upload:', {
-        valid: this.addCategoryForm.valid,
-        dirty: this.addCategoryForm.dirty,
-        selectedImage: !!this.selectedImage,
-      });
     }
   }
 
   isFormValid(): boolean {
     const nameValid = !!this.addCategoryForm.get('name')?.valid;
-    const imageValid = this.isEditMode ? true : !!this.selectedImage; // Image is optional in edit mode
+    const imageValid = this.isEditMode ? true : !!this.selectedImage;
+    if (this.imageError) return false;
     return nameValid && imageValid;
   }
 

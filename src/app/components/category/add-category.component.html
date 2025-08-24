@@ -25,11 +25,10 @@
       <div class="field">
         <label for="image" [class.required]="!isEditMode">Category Image</label>
         <div *ngIf="currentImageUrl && !selectedImage" class="mb-2">
-          <img [src]="currentImageUrl" 
-               alt="Current category image" 
-               style="max-width: 200px; max-height: 200px; object-fit: contain;" 
-               (error)="handleImageError($event)"
-               onerror="this.style.display='none'" />
+    <img [src]="currentImageUrl" 
+      alt="Current category image" 
+      style="max-width: 200px; max-height: 200px; object-fit: contain;" 
+      onerror="this.style.display='none'" />
           <div *ngIf="imageLoadError" class="text-danger">
             <small>Error loading image. URL: {{currentImageUrl}}</small>
           </div>
@@ -39,13 +38,13 @@
           mode="basic"
           [auto]="true"
           [chooseLabel]="isEditMode ? 'Change Image' : 'Choose Image'"
-          [maxFileSize]="1000000"
-          accept="image/*"
+          [maxFileSize]="1048576"
+          accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
           (onSelect)="onImageUpload($event)"
           [customUpload]="true"
           [ngClass]="{'ng-invalid': !selectedImage && !isEditMode && addCategoryForm.get('image')?.touched}"
-        >
-        </p-fileUpload>
+        ></p-fileUpload>
+  <small class="p-error block" *ngIf="imageError">{{ imageError }}</small>
         <small class="p-error block" *ngIf="!selectedImage && !isEditMode && addCategoryForm.get('image')?.touched">
           Category image is required
         </small>

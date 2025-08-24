@@ -214,8 +214,6 @@ import { CategoryService, Category } from '../../services/category.service';
                 [src]="currentImageUrl"
                 alt="Current subcategory image"
                 style="max-width: 200px; max-height: 200px; object-fit: contain;"
-                (error)="handleImageError($event)"
-                onerror="this.style.display='none'"
               />
               <div *ngIf="imageLoadError" class="text-danger">
                 <small>Error loading image. URL: {{ currentImageUrl }}</small>
@@ -226,8 +224,8 @@ import { CategoryService, Category } from '../../services/category.service';
               mode="basic"
               [auto]="true"
               [chooseLabel]="isEditMode ? 'Change Image' : 'Choose Image'"
-              [maxFileSize]="1000000"
-              accept="image/*"
+              [maxFileSize]="1048576"
+              accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
               (onSelect)="onImageUpload($event)"
               [customUpload]="true"
               [ngClass]="{
@@ -238,6 +236,9 @@ import { CategoryService, Category } from '../../services/category.service';
               }"
             >
             </p-fileUpload>
+            <small class="p-error block" *ngIf="imageError">{{
+              imageError
+            }}</small>
             <small
               class="p-error block"
               *ngIf="
@@ -269,6 +270,7 @@ export class AddSubcategoryComponent {
   displayDialog: boolean = false;
   addSubcategoryForm: FormGroup;
   selectedImage: File | null = null;
+  imageError: string | null = null;
   isEditMode: boolean = false;
   editId: string | null = null;
   currentImageUrl: string | null = null;
@@ -330,8 +332,19 @@ export class AddSubcategoryComponent {
   }
 
   onImageUpload(event: any) {
+    this.imageError = null;
     if (event && event.files && event.files.length > 0) {
-      const file = event.files[0];
+      const file = event.files[0] as File;
+      const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+      const maxBytes = 1024 * 1024; // 1 MB
+      if (!validTypes.includes(file.type)) {
+        this.imageError = 'Only JPG, JPEG, PNG or WEBP images are allowed';
+        return;
+      }
+      if (file.size > maxBytes) {
+        this.imageError = 'Image must be 1MB or smaller';
+        return;
+      }
       this.selectedImage = file;
       this.addSubcategoryForm.patchValue({ image: file });
       this.addSubcategoryForm.markAsDirty();
@@ -347,6 +360,7 @@ export class AddSubcategoryComponent {
     const nameValid = !!this.addSubcategoryForm.get('name')?.valid;
     const categoryValid = !!this.addSubcategoryForm.get('categoryId')?.valid;
     const imageValid = this.isEditMode ? true : !!this.selectedImage;
+    if (this.imageError) return false;
     return nameValid && categoryValid && imageValid;
   }
 

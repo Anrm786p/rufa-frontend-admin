@@ -152,11 +152,27 @@ export class AddProductComponent {
 
   // SEO tags handled by p-chips component
   onVariationFilesSelected(event: any, index: number) {
-    const files: File[] = Array.from(event.files || event.target.files || []);
+    const rawFiles: File[] = Array.from(
+      event.files || event.target.files || []
+    );
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    const maxBytes = 1024 * 1024; // 1 MB
+    const accepted: File[] = [];
+    for (const f of rawFiles) {
+      if (!validTypes.includes(f.type)) {
+        console.warn('Rejected file (type):', f.name);
+        continue;
+      }
+      if (f.size > maxBytes) {
+        console.warn('Rejected file (size >1MB):', f.name);
+        continue;
+      }
+      accepted.push(f);
+    }
     const ctrl = this.variationsArray.at(index).get('images');
     if (!ctrl) return;
     const existing: File[] = ctrl.value || [];
-    const combined = [...existing, ...files].slice(
+    const combined = [...existing, ...accepted].slice(
       0,
       this.maxImagesPerVariation
     );
