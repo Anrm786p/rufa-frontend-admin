@@ -118,11 +118,13 @@ export class ProductComponent implements OnInit {
     this.subcategoryService.getSubcategoriesByCategory(categoryId).subscribe({
       next: (subs) => {
         this.subcategories = subs;
-        this.subCategoryOptions = subs;
+        this.subCategoryOptions = [...subs]; // Create new array reference
         this.subcategoriesLoading = false;
       },
       error: (e) => {
         console.error('Failed to load subcategories', e);
+        this.subcategories = [];
+        this.subCategoryOptions = [];
         this.subcategoriesLoading = false;
       },
     });
@@ -131,22 +133,14 @@ export class ProductComponent implements OnInit {
   private mapProduct(p: ApiProduct) {
     // Build absolute URL: http://localhost:5000/assets/products/<imageId or filename>
     // Accept both absolute URLs & already-correct paths.
-    const baseProductAsset = 'http://localhost:5000/assets/products';
-    const normalize = (segment: string) => segment.replace(/^\/+/, '');
+    const baseProductAsset = `${environment.apiUrl.replace(
+      '/api',
+      ''
+    )}/assets/products`;
     const resolveImagePath = (img: string): string => {
       if (!img) return '';
-      if (/^https?:\/\//i.test(img)) return img; // already absolute
-      // If path already starts with /assets/products or assets/products keep but make absolute
-      if (/^\/?assets\/products\//i.test(img)) {
-        const cleaned = img.replace(/^\//, '');
-        return `http://localhost:5000/${cleaned}`;
-      }
-      // If it contains a slash but not our target base, assume backend gave relative path under assets/product
-      if (img.includes('/')) {
-        return `http://localhost:5000/${normalize(img)}`;
-      }
       // Treat as bare filename/id
-      return `${baseProductAsset}/${normalize(img)}`;
+      return `${baseProductAsset}/${img}`;
     };
     const categoryName = (p as any).category?.name || (p as any).category || '';
     const subcategoriesDisplay = (p.subcategories || [])
@@ -160,9 +154,7 @@ export class ProductComponent implements OnInit {
     }));
     const priceDisplay = this.buildPriceDisplay(variations);
     // Prefer product level imageUrl if provided
-    let primaryImage = resolveImagePath(
-      (p as any).imageUrl || variations[0]?.processedImages[0] || ''
-    );
+    let primaryImage = variations[0]?.processedImages[0];
     // Provide a stable unique id for table dataKey & expansion
     const resolvedId =
       (p as any).id ??
@@ -226,7 +218,10 @@ export class ProductComponent implements OnInit {
 
   onCategoryChange() {
     this.selectedSubCategoryId = '';
-    this.loadSubcategories(this.selectedCategoryId);
+    this.subCategoryOptions = []; // Clear immediately to prevent old data
+    if (this.selectedCategoryId) {
+      this.loadSubcategories(this.selectedCategoryId);
+    }
     this.page = 1;
     this.loadProducts();
   }

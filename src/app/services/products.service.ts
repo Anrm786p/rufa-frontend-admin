@@ -42,7 +42,7 @@ export class ProductsService {
       if (filters.order) params = params.set('order', filters.order);
     }
     return this.http.get<{ data: ApiProduct[]; pagination: any }>(
-      `${environment.apiUrl}/products`,
+      `${environment.apiUrl}/products/search`,
       { params }
     );
   }

@@ -4,7 +4,7 @@
   [submitLabel]="mode === 'view' ? 'Close' : 'Add Product'"
   [cancelLabel]="'Close'"
   [showSubmit]="mode === 'create'"
-  [isSubmitDisabled]="mode === 'create' && !isFormComplete"
+  [isSubmitDisabled]="false"
   (cancel)="closeDialog()"
   (submit)="addProduct()">
 
@@ -23,15 +23,18 @@
   <!-- Category -->
     <div class="field">
       <label for="categoryId" class="required">Category</label>
-      <p-select
+      <p-dropdown
         id="categoryId"
         formControlName="categoryId"
         [options]="categories"
         optionLabel="name"
         optionValue="id"
         placeholder="Select Category"
+        appendTo="body"
+        [showClear]="true"
+        [style]="{'width':'100%', 'min-width': '300px'}"
         (onChange)="onCategoryChange($event.value)">
-      </p-select>
+      </p-dropdown>
     </div>
 
     <!-- Subcategories Multi-select -->
@@ -43,8 +46,10 @@
         optionLabel="name"
         optionValue="id"
         display="chip"
-  [filter]="false"
+        [filter]="false"
         [showClear]="true"
+        appendTo="body"
+        [style]="{'width':'100%'}"
         placeholder="Select Subcategories">
       </p-multiSelect>
     </div>
@@ -52,19 +57,37 @@
     <!-- Product Variation Type (moved from each variation) -->
     <div class="field">
       <label class="required">Variation Type</label>
-      <p-select formControlName="variationType" [options]="variationTypeOptions" optionLabel="label" optionValue="value" placeholder="Select Type"></p-select>
+      <p-dropdown 
+        formControlName="variationType" 
+        [options]="variationTypeOptions" 
+        optionLabel="label" 
+        optionValue="value" 
+        placeholder="Select variation type" 
+        appendTo="body"
+        [showClear]="true"
+        [style]="{'width':'100%', 'min-width': '300px'}">
+      </p-dropdown>
     </div>
 
     <!-- SEO Tags (Chips) -->
     <div class="field">
-      <label>SEO Tags</label>
+      <label>SEO Tags *</label>
       <p-chips formControlName="seoTags" separator="," addOnBlur="true" placeholder="Type tag and press Enter"></p-chips>
-      <small class="text-muted">Will be saved as comma separated list.</small>
+      <small class="text-muted">Will be saved as comma separated list. Minimum 2 tags required.</small>
+      <div class="field-error" *ngIf="addProductForm.get('seoTags')?.invalid && addProductForm.get('seoTags')?.touched">
+        <small class="error-message" *ngIf="addProductForm.get('seoTags')?.hasError('required')">
+          SEO tags are required
+        </small>
+        <small class="error-message" *ngIf="addProductForm.get('seoTags')?.hasError('minTags')">
+          At least {{ addProductForm.get('seoTags')?.getError('minTags')?.requiredTags }} SEO tags are required
+          (currently {{ addProductForm.get('seoTags')?.getError('minTags')?.actualTags }})
+        </small>
+      </div>
     </div>
 
     <!-- Product level update button in edit mode -->
     <div *ngIf="mode==='edit'" class="mb-3" style="display:flex; justify-content:flex-end;">
-      <button type="button" pButton severity="success" icon="pi pi-check" label="Done" class="done-update-btn" [disabled]="!canUpdateProductInfo()" (click)="updateProductInfo()"></button>
+      <button type="button" pButton severity="success" icon="pi pi-check" label="Done" class="done-update-btn" (click)="updateProductInfo()"></button>
     </div>
 
     <!-- Variations Section -->
@@ -95,6 +118,18 @@
             <div class="col-12 md:col-4 field">
               <label class="required">Purchase Price</label>
               <input type="number" pInputText formControlName="purchasePrice" />
+            </div>
+            <!-- Price hierarchy validation error -->
+            <div class="col-12" *ngIf="hasVariationPriceErrors(i)">
+              <div class="p-message p-message-error p-message-fill" style="margin-bottom: 1rem;">
+                <div class="p-message-wrapper">
+                  <span class="p-message-icon pi pi-exclamation-triangle"></span>
+                  <div class="p-message-text">
+                    <strong>Price Validation Error:</strong> {{ getPriceErrorMessage(i) }}
+                    <br><small>Required: Purchase Price &lt; Our Price &lt; Market Price</small>
+                  </div>
+                </div>
+              </div>
             </div>
             <div class="col-12 md:col-4 field">
               <label class="required">Weight</label>
@@ -146,7 +181,7 @@
           <!-- Variation action buttons (edit mode) -->
           <div *ngIf="mode==='edit'" class="variation-actions">
             <div class="spacer"></div>
-            <button type="button" pButton severity="success" icon="pi pi-save" [label]="isExistingVariation(i) ? 'Save Variation' : 'Create Variation'" class="var-btn" [disabled]="!canSaveVariation(i)" (click)="saveVariation(i)"></button>
+            <button type="button" pButton severity="success" icon="pi pi-save" [label]="isExistingVariation(i) ? 'Save Variation' : 'Create Variation'" class="var-btn" (click)="saveVariation(i)"></button>
             <button *ngIf="persistedVariationCount() > 1" type="button" pButton severity="danger" icon="pi pi-trash" label="Delete" class="var-btn" (click)="deleteVariation(i)"></button>
           </div>
         </div>

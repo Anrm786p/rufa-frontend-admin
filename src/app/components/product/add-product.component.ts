@@ -1,4 +1,10 @@
-import { Component, Output, EventEmitter, HostBinding } from '@angular/core';
+import {
+  Component,
+  Output,
+  EventEmitter,
+  HostBinding,
+  OnInit,
+} from '@angular/core';
 import {
   FormBuilder,
   FormGroup,
@@ -24,6 +30,7 @@ import {
   SubcategoryService,
   Subcategory,
 } from '../../services/subcategory.service';
+import { SharedMessageService } from '../../services/message.service';
 
 @Component({
   selector: 'app-add-product',
@@ -33,6 +40,7 @@ import {
     InputTextModule,
     ButtonModule,
     FileUploadModule,
+    DropdownModule,
     SelectModule,
     MultiSelectModule,
     TagModule,
@@ -43,17 +51,17 @@ import {
   templateUrl: './add-product.component.html',
   styleUrls: ['./add-product.component.css'],
 })
-export class AddProductComponent {
+export class AddProductComponent implements OnInit {
   @Output() productAdded = new EventEmitter<any>();
   @Output() closed = new EventEmitter<void>();
   displayDialog = false;
   mode: 'create' | 'edit' | 'view' = 'create';
   editingId: string | null = null;
   addProductForm: FormGroup;
-  currentProduct: any = null; // keeps original product (for view mode images, etc.)
-  private removedVariationIds: string[] = []; // track deleted variations in edit mode
-  variationImageRemoval: { [variationId: string]: Set<string> } = {}; // track images marked for removal per variation
-  private variationAllImagesRemoved: { [variationId: string]: boolean } = {}; // flag when all existing images cleared pending replacement
+  currentProduct: any = null;
+  private removedVariationIds: string[] = [];
+  variationImageRemoval: { [variationId: string]: Set<string> } = {};
+  private variationAllImagesRemoved: { [variationId: string]: boolean } = {};
 
   categories: Category[] = [];
   subcategories: Subcategory[] = [];
@@ -70,7 +78,8 @@ export class AddProductComponent {
     private fb: FormBuilder,
     private http: HttpClient,
     private categoryService: CategoryService,
-    private subcategoryService: SubcategoryService
+    private subcategoryService: SubcategoryService,
+    private messageService: SharedMessageService
   ) {
     this.addProductForm = this.fb.group({
       name: ['', Validators.required],
@@ -78,10 +87,10 @@ export class AddProductComponent {
       categoryId: ['', Validators.required],
       subcategoryIds: [[], Validators.required],
       variationType: ['single', Validators.required],
-      seoTags: [[]], // now optional
+      seoTags: [[], [Validators.required, this.minTagsValidator(2)]],
       variations: this.fb.array([this.createVariationGroup()]),
     });
-    this.loadCategories();
+
     // Enforce single variation when variationType is 'single'
     this.addProductForm.get('variationType')?.valueChanges.subscribe((val) => {
       if (val === 'single' && this.variationsArray.length > 1) {
@@ -90,30 +99,223 @@ export class AddProductComponent {
         }
       }
     });
+
     // Watch variation name fields for duplicates
     this.addProductForm
       .get('variations')
       ?.valueChanges.subscribe(() => this.applyVariationNameUniqueness());
   }
 
+  ngOnInit() {
+    this.loadCategories();
+  }
+
+  // Add missing initForm method
+  initForm() {
+    // Initialize form if needed
+    console.log('Form initialized');
+  }
+
+  // Add missing debugData method
+  debugData() {
+    console.log('Categories:', this.categories);
+    console.log('Filtered Subcategories:', this.filteredSubcategories);
+    console.log('Form Values:', this.addProductForm.value);
+  }
+
   // Variation FormGroup factory
   private createVariationGroup(): FormGroup {
-    return this.fb.group({
-      id: [''], // existing variation id (edit mode)
-      name: ['', Validators.required],
-      ourPrice: [null, [Validators.required, Validators.min(0)]],
-      marketPrice: [null, [Validators.required, Validators.min(0)]],
-      purchasePrice: [null, [Validators.required, Validators.min(0)]],
-      weight: [null, [Validators.required, Validators.min(0)]],
-      images: [
-        [],
-        [
-          Validators.required,
-          this.minImagesValidator(1),
-          this.maxImagesValidator(this.maxImagesPerVariation),
+    return this.fb.group(
+      {
+        id: [''],
+        name: ['', Validators.required],
+        ourPrice: [null, [Validators.required, Validators.min(0)]],
+        marketPrice: [null, [Validators.required, Validators.min(0)]],
+        purchasePrice: [null, [Validators.required, Validators.min(0)]],
+        weight: [null, [Validators.required, Validators.min(0)]],
+        images: [
+          [],
+          [
+            Validators.required,
+            this.minImagesValidator(1),
+            this.maxImagesValidator(this.maxImagesPerVariation),
+          ],
         ],
-      ],
+      },
+      { validators: this.priceHierarchyValidator() }
+    );
+  }
+
+  // Helper methods for price validation errors
+  getPriceValidationErrors(index: number) {
+    const variation = this.variationsArray.at(index) as FormGroup;
+    if (!variation) return {};
+
+    const errors = variation.errors || {};
+    return {
+      purchasePriceTooHigh: errors['purchasePriceTooHigh'] || false,
+      ourPriceTooHigh: errors['ourPriceTooHigh'] || false,
+    };
+  }
+
+  getPriceErrorMessage(index: number): string {
+    const errors = this.getPriceValidationErrors(index);
+    const variation = this.variationsArray.at(index) as FormGroup;
+
+    if (!variation) return '';
+
+    const purchasePrice = variation.get('purchasePrice')?.value;
+    const ourPrice = variation.get('ourPrice')?.value;
+    const marketPrice = variation.get('marketPrice')?.value;
+
+    if (errors.purchasePriceTooHigh) {
+      return `Purchase price (${purchasePrice}) must be lower than our price (${ourPrice})`;
+    }
+    if (errors.ourPriceTooHigh) {
+      return `Our price (${ourPrice}) must be lower than market price (${marketPrice})`;
+    }
+    return '';
+  }
+
+  // Check if variation has price hierarchy errors
+  hasVariationPriceErrors(index: number): boolean {
+    const errors = this.getPriceValidationErrors(index);
+    return errors.purchasePriceTooHigh || errors.ourPriceTooHigh;
+  }
+
+  // Comprehensive validation method that shows toast messages
+  validateFormAndShowErrors(): boolean {
+    // Mark all fields as touched to show validation errors
+    this.addProductForm.markAllAsTouched();
+    this.variationsArray.controls.forEach((control) => {
+      control.markAllAsTouched();
     });
+
+    const errors: string[] = [];
+
+    // Check main form fields
+    if (this.addProductForm.get('name')?.invalid) {
+      errors.push('Product name is required');
+    }
+    if (this.addProductForm.get('description')?.invalid) {
+      errors.push('Product description is required');
+    }
+    if (this.addProductForm.get('categoryId')?.invalid) {
+      errors.push('Category selection is required');
+    }
+    if (this.addProductForm.get('subcategoryIds')?.invalid) {
+      errors.push('At least one subcategory must be selected');
+    }
+
+    // SEO Tags validation
+    const seoTagsControl = this.addProductForm.get('seoTags');
+    if (seoTagsControl?.invalid) {
+      if (seoTagsControl.hasError('required')) {
+        errors.push('SEO tags are required');
+      } else if (seoTagsControl.hasError('minTags')) {
+        const minTagsError = seoTagsControl.getError('minTags');
+        errors.push(
+          `At least ${minTagsError.requiredTags} SEO tags are required (currently ${minTagsError.actualTags})`
+        );
+      }
+    }
+
+    // Check variation requirements
+    const variationType = this.addProductForm.get('variationType')?.value;
+    const requiredVariations = variationType === 'single' ? 1 : 2;
+
+    if (this.variationsArray.length < requiredVariations) {
+      errors.push(
+        `${
+          variationType === 'single'
+            ? 'At least 1 variation'
+            : 'At least 2 variations'
+        } required for ${variationType} mode`
+      );
+    }
+
+    // Check each variation
+    this.variationsArray.controls.forEach((variation, index) => {
+      const variationGroup = variation as FormGroup;
+      const variationNumber = index + 1;
+
+      // Required fields
+      if (variationGroup.get('name')?.invalid) {
+        errors.push(`Variation ${variationNumber}: Name is required`);
+      }
+      if (variationGroup.get('ourPrice')?.invalid) {
+        errors.push(
+          `Variation ${variationNumber}: Our price is required and must be greater than 0`
+        );
+      }
+      if (variationGroup.get('marketPrice')?.invalid) {
+        errors.push(
+          `Variation ${variationNumber}: Market price is required and must be greater than 0`
+        );
+      }
+      if (variationGroup.get('purchasePrice')?.invalid) {
+        errors.push(
+          `Variation ${variationNumber}: Purchase price is required and must be greater than 0`
+        );
+      }
+      if (variationGroup.get('weight')?.invalid) {
+        errors.push(
+          `Variation ${variationNumber}: Weight is required and must be greater than 0`
+        );
+      }
+
+      // Images validation
+      const images = variationGroup.get('images')?.value || [];
+      const isNewVariation = !variationGroup.get('id')?.value;
+      const hasExistingImages =
+        this.currentProduct?.variations?.[index]?.processedImages?.length > 0;
+
+      if (isNewVariation && images.length === 0) {
+        errors.push(
+          `Variation ${variationNumber}: At least 1 image is required`
+        );
+      } else if (
+        this.mode === 'edit' &&
+        !hasExistingImages &&
+        images.length === 0
+      ) {
+        errors.push(
+          `Variation ${variationNumber}: At least 1 image is required`
+        );
+      }
+
+      // Price hierarchy validation
+      if (this.hasVariationPriceErrors(index)) {
+        const priceError = this.getPriceErrorMessage(index);
+        errors.push(`Variation ${variationNumber}: ${priceError}`);
+      }
+
+      // Duplicate name validation
+      if (variationGroup.hasError('duplicate')) {
+        errors.push(
+          `Variation ${variationNumber}: Name must be unique across all variations`
+        );
+      }
+    });
+
+    // Show errors if any exist
+    if (errors.length > 0) {
+      const errorMessage =
+        errors.length === 1
+          ? errors[0]
+          : `${errors.length} validation errors found:\n• ${errors.join(
+              '\n• '
+            )}`;
+
+      this.messageService.showMessage(
+        'Validation Error',
+        errorMessage,
+        'error'
+      );
+      return false;
+    }
+
+    return true;
   }
 
   get variationsArray(): FormArray {
@@ -121,7 +323,7 @@ export class AddProductComponent {
   }
 
   addVariation() {
-    if (this.addProductForm.get('variationType')?.value === 'single') return; // block in single variation mode
+    if (this.addProductForm.get('variationType')?.value === 'single') return;
     this.variationsArray.push(this.createVariationGroup());
     this.applyVariationNameUniqueness();
   }
@@ -137,23 +339,37 @@ export class AddProductComponent {
     }
   }
 
-  onCategoryChange(categoryId: string) {
-    this.addProductForm.patchValue({ subcategoryIds: [] });
-    if (!categoryId) {
-      this.filteredSubcategories = [];
-      return;
-    }
-    this.subcategoryService.getSubcategoriesByCategory(categoryId).subscribe({
-      next: (subs: Subcategory[]) => (this.filteredSubcategories = subs),
-      error: (err: any) => console.error('Error loading subcategories', err),
+  loadCategories() {
+    this.categoryService.getCategories().subscribe({
+      next: (cats) => {
+        console.log('Categories loaded:', cats);
+        this.categories = cats;
+        // Call debug after categories load
+        setTimeout(() => this.debugData(), 1000);
+      },
+      error: (e) => console.error('Failed to load categories', e),
     });
   }
 
-  private loadCategories() {
-    this.categoryService.getCategories().subscribe({
-      next: (cats) => (this.categories = cats),
-      error: (err) => console.error('Error loading categories', err),
-    });
+  onCategoryChange(categoryId: string) {
+    console.log('Category changed to:', categoryId);
+
+    // Reset subcategories
+    this.filteredSubcategories = [];
+    this.addProductForm.patchValue({ subcategoryIds: [] });
+
+    if (categoryId) {
+      this.subcategoryService.getSubcategoriesByCategory(categoryId).subscribe({
+        next: (subs) => {
+          console.log('Subcategories loaded:', subs);
+          this.filteredSubcategories = subs;
+        },
+        error: (e) => {
+          console.error('Failed to load subcategories', e);
+          this.filteredSubcategories = [];
+        },
+      });
+    }
   }
 
   // SEO tags handled by p-chips component
@@ -212,6 +428,41 @@ export class AddProductComponent {
     };
   }
 
+  private minTagsValidator(min: number) {
+    return (control: AbstractControl) => {
+      const value = control.value || [];
+      return value.length >= min
+        ? null
+        : { minTags: { requiredTags: min, actualTags: value.length } };
+    };
+  }
+
+  // Price hierarchy validators
+  private priceHierarchyValidator() {
+    return (group: AbstractControl) => {
+      if (!(group instanceof FormGroup)) return null;
+
+      const purchasePrice = group.get('purchasePrice')?.value;
+      const ourPrice = group.get('ourPrice')?.value;
+      const marketPrice = group.get('marketPrice')?.value;
+
+      const errors: any = {};
+
+      // All prices must be present to validate hierarchy
+      if (purchasePrice != null && ourPrice != null && marketPrice != null) {
+        // purchasePrice < ourPrice < marketPrice
+        if (purchasePrice >= ourPrice) {
+          errors.purchasePriceTooHigh = true;
+        }
+        if (ourPrice >= marketPrice) {
+          errors.ourPriceTooHigh = true;
+        }
+      }
+
+      return Object.keys(errors).length > 0 ? errors : null;
+    };
+  }
+
   get isFormComplete(): boolean {
     if (!this.addProductForm.valid) return false;
     // In edit mode we allow product update independent of variation validity (variations handled separately)
@@ -219,7 +470,11 @@ export class AddProductComponent {
     const vt = this.addProductForm.get('variationType')?.value;
     const need = vt === 'single' ? 1 : 2; // multi create requires at least 2
     if (this.variationsArray.length < need) return false;
-    return this.variationsArray.controls.every((c) => c.valid);
+
+    // Check if all variations are valid and have no price hierarchy errors
+    return this.variationsArray.controls.every((c, index) => {
+      return c.valid && !this.hasVariationPriceErrors(index);
+    });
   }
 
   openDialog() {
@@ -233,9 +488,7 @@ export class AddProductComponent {
       subcategoryIds: [],
       variationType: 'single',
       seoTags: [],
-      variations: [
-        /* reset below */
-      ],
+      variations: [],
     });
     // Reset variations array to single blank
     while (this.variationsArray.length > 1)
@@ -259,11 +512,14 @@ export class AddProductComponent {
     this.currentProduct = product;
     this.editingId = product.id || null;
     this.removedVariationIds = [];
+
     // Clear variations
     while (this.variationsArray.length) this.variationsArray.removeAt(0);
+
     const variationType =
       product.variationType ||
       (product.variations?.length > 1 ? 'multi' : 'single');
+
     (product.variations || []).forEach((v: any) => {
       const g = this.createVariationGroup();
       g.patchValue({
@@ -273,8 +529,9 @@ export class AddProductComponent {
         marketPrice: v.marketPrice ?? null,
         purchasePrice: v.purchasePrice ?? null,
         weight: v.weight ?? null,
-        images: [], // can't reconstruct File objects; leave empty
+        images: [],
       });
+
       // If editing and existing images present, relax required/min validators for images
       if (mode === 'edit' && (v.processedImages?.length || v.images?.length)) {
         const imgCtrl = g.get('images');
@@ -288,14 +545,18 @@ export class AddProductComponent {
       }
       this.variationsArray.push(g);
     });
+
     if (!this.variationsArray.length)
       this.variationsArray.push(this.createVariationGroup());
+
     this.applyVariationNameUniqueness();
+
     const categoryId =
       product.categoryId || product.category?._id || product.category?.id || '';
     const desiredSubIds: string[] = (product.subcategories || [])
       .map((s: any) => s.id || s._id)
       .filter(Boolean);
+
     // Patch immediate scalar fields (except subcategoryIds which depend on async load)
     this.addProductForm.patchValue({
       name: product.name || '',
@@ -304,6 +565,7 @@ export class AddProductComponent {
       variationType,
       seoTags: product.seoTags || [],
     });
+
     if (categoryId) {
       // Load subcategories for that category, then patch IDs so they appear selected
       this.subcategoryService.getSubcategoriesByCategory(categoryId).subscribe({
@@ -326,6 +588,7 @@ export class AddProductComponent {
       this.addProductForm.patchValue({ subcategoryIds: desiredSubIds });
       if (mode === 'view') this.addProductForm.disable({ emitEvent: false });
     }
+
     if (mode !== 'view') this.addProductForm.enable({ emitEvent: false });
     this.displayDialog = true;
   }
@@ -354,16 +617,18 @@ export class AddProductComponent {
       this.closeDialog();
       return;
     }
-    if (!this.isFormComplete) {
-      this.addProductForm.markAllAsTouched();
-      return;
+
+    // Use comprehensive validation with toast messages
+    if (!this.validateFormAndShowErrors()) {
+      return; // Validation failed, errors shown via toast
     }
+
     const raw = this.addProductForm.value;
     const formData = new FormData();
     formData.append('name', raw.name);
     formData.append('description', raw.description);
     formData.append('categoryId', raw.categoryId);
-    formData.append('subCategoryIds', JSON.stringify(raw.subcategoryIds)); // renamed key
+    formData.append('subCategoryIds', JSON.stringify(raw.subcategoryIds));
     formData.append('variationType', raw.variationType);
     formData.append('seoTags', (raw.seoTags || []).join(','));
 
@@ -378,6 +643,7 @@ export class AddProductComponent {
       return rest;
     });
     formData.append('variations', JSON.stringify(variationsPayload));
+
     if (this.removedVariationIds.length) {
       formData.append(
         'removedVariationIds',
@@ -404,7 +670,6 @@ export class AddProductComponent {
             category: categoryName,
             subcategoriesDisplay: subcatNames,
             price: price,
-            // placeholder image (could be updated after backend returns real image URLs)
             image: '',
           };
           this.productAdded.emit(localProduct);
@@ -441,14 +706,54 @@ export class AddProductComponent {
 
   updateProductInfo() {
     if (this.mode !== 'edit') return;
-    if (
-      !this.addProductForm.get('name')?.valid ||
-      !this.addProductForm.get('categoryId')?.valid
-    ) {
-      this.addProductForm.get('name')?.markAsTouched();
-      this.addProductForm.get('categoryId')?.markAsTouched();
+
+    // Mark main form fields as touched for visual feedback
+    this.addProductForm.markAllAsTouched();
+
+    const errors: string[] = [];
+
+    // Check required fields
+    if (!this.addProductForm.get('name')?.valid) {
+      errors.push('Product name is required');
+    }
+    if (!this.addProductForm.get('description')?.valid) {
+      errors.push('Product description is required');
+    }
+    if (!this.addProductForm.get('categoryId')?.valid) {
+      errors.push('Category selection is required');
+    }
+    if (!this.addProductForm.get('subcategoryIds')?.valid) {
+      errors.push('At least one subcategory must be selected');
+    }
+
+    // SEO Tags validation
+    const seoTagsControl = this.addProductForm.get('seoTags');
+    if (seoTagsControl?.invalid) {
+      if (seoTagsControl.hasError('required')) {
+        errors.push('SEO tags are required');
+      } else if (seoTagsControl.hasError('minTags')) {
+        const minTagsError = seoTagsControl.getError('minTags');
+        errors.push(
+          `At least ${minTagsError.requiredTags} SEO tags are required (currently ${minTagsError.actualTags})`
+        );
+      }
+    }
+
+    // Check if there are any changes to save
+    if (!this.productInfoDirty) {
+      errors.push('No changes detected to save');
+    }
+
+    // Show errors if any
+    if (errors.length > 0) {
+      this.messageService.showMessage(
+        'Validation Error',
+        errors.join(', '),
+        'error'
+      );
       return;
     }
+
     this.updateProduct();
   }
 
@@ -484,7 +789,8 @@ export class AddProductComponent {
     return !!(
       this.productInfoDirty &&
       this.addProductForm.get('name')?.valid &&
-      this.addProductForm.get('categoryId')?.valid
+      this.addProductForm.get('categoryId')?.valid &&
+      this.addProductForm.get('seoTags')?.valid
     );
   }
 
@@ -493,62 +799,215 @@ export class AddProductComponent {
     return !!(this.variationsArray.at(index) as FormGroup).get('id')?.value;
   }
 
-  canSaveVariationData(index: number): boolean {
+  // Helper method to check if images were modified
+  private areImagesModified(index: number): boolean {
     const grp = this.variationsArray.at(index) as FormGroup;
-    if (!grp) return false;
-    const fields = [
-      'name',
-      'ourPrice',
-      'marketPrice',
-      'purchasePrice',
-      'weight',
-    ];
-    if (fields.some((f) => !grp.get(f)?.valid)) return false;
-    if (!this.isExistingVariation(index)) return true; // new variation
-    return grp.dirty; // existing must be dirty
+    const id = grp.get('id')?.value;
+
+    // For new variations, images are always considered "modified" since they need to be uploaded
+    if (!id) {
+      const files: File[] = grp.get('images')?.value || [];
+      return files.length > 0;
+    }
+
+    // For existing variations, check for actual image changes
+    const files: File[] = grp.get('images')?.value || [];
+    const removalSet = this.getRemovalSet(index);
+
+    // Check if user selected new images to upload
+    const hasNewImagesToUpload = files.length > 0;
+
+    // Check if user marked existing images for removal
+    const hasMarkedImagesForRemoval = removalSet.size > 0;
+    const hasMarkedAllImagesForRemoval =
+      this.variationAllImagesRemoved[id] === true;
+
+    const result =
+      hasNewImagesToUpload ||
+      hasMarkedImagesForRemoval ||
+      hasMarkedAllImagesForRemoval;
+
+    console.log(
+      `Image modification check for variation ${index} (ID: ${id}):`,
+      {
+        hasNewImagesToUpload,
+        hasMarkedImagesForRemoval,
+        hasMarkedAllImagesForRemoval,
+        filesCount: files.length,
+        removalSetSize: removalSet.size,
+        result,
+      }
+    );
+
+    return result;
   }
 
-  // Unified save button logic (handles create + update + images)
-  canSaveVariation(index: number): boolean {
+  // Helper method to get save strategy info for UI feedback (optional)
+  getSaveStrategy(
+    index: number
+  ): 'create' | 'put-with-images' | 'patch-text-only' | 'no-changes' {
     const grp = this.variationsArray.at(index) as FormGroup;
-    if (!grp) return false;
     const id = grp.get('id')?.value;
-    const fields = [
+
+    if (!id) return 'create';
+
+    const imagesModified = this.areImagesModified(index);
+    const textFieldsModified = this.areTextFieldsModified(index);
+
+    if (imagesModified) return 'put-with-images';
+    if (textFieldsModified) return 'patch-text-only';
+    return 'no-changes';
+  }
+
+  // Helper method to check if text fields were modified
+  private areTextFieldsModified(index: number): boolean {
+    const grp = this.variationsArray.at(index) as FormGroup;
+    const id = grp.get('id')?.value;
+
+    // For new variations, always consider as modified
+    if (!id) return true;
+
+    const val = grp.value;
+    const original = this.currentProduct?.variations?.[index] || {};
+    const textFields = [
       'name',
       'ourPrice',
       'marketPrice',
       'purchasePrice',
       'weight',
     ];
-    if (fields.some((f) => !grp.get(f)?.valid)) return false;
+
+    const changes: any = {};
+    textFields.forEach((field) => {
+      if (val[field] !== undefined && val[field] !== original[field]) {
+        changes[field] = { from: original[field], to: val[field] };
+      }
+    });
+
+    const isModified = Object.keys(changes).length > 0;
+
+    console.log(
+      `Text fields modification check for variation ${index} (ID: ${id}):`,
+      {
+        isModified,
+        changes,
+        currentValues: textFields.reduce(
+          (acc, field) => ({ ...acc, [field]: val[field] }),
+          {}
+        ),
+        originalValues: textFields.reduce(
+          (acc, field) => ({ ...acc, [field]: original[field] }),
+          {}
+        ),
+      }
+    );
+
+    return isModified;
+  }
+
+  canSaveVariation(index: number): boolean {
+    // Always return true - validation errors will be shown via toast messages
+    return true;
+  }
+
+  private validateVariationAndShowErrors(index: number): boolean {
+    const grp = this.variationsArray.at(index) as FormGroup;
+    if (!grp) {
+      this.messageService.showMessage('Error', 'Invalid variation', 'error');
+      return false;
+    }
+
+    // Mark all fields as touched for visual feedback
+    grp.markAllAsTouched();
+
+    const errors: string[] = [];
+    const id = grp.get('id')?.value;
+    const fields = [
+      { name: 'name', label: 'Variation Name' },
+      { name: 'ourPrice', label: 'Our Price' },
+      { name: 'marketPrice', label: 'Market Price' },
+      { name: 'purchasePrice', label: 'Purchase Price' },
+      { name: 'weight', label: 'Weight' },
+    ];
+
+    // Check required fields
+    fields.forEach((field) => {
+      const control = grp.get(field.name);
+      if (!control?.valid) {
+        if (control?.hasError('required')) {
+          errors.push(`${field.label} is required`);
+        }
+      }
+    });
+
+    // Check for price hierarchy errors
+    if (this.hasVariationPriceErrors(index)) {
+      const purchasePrice = grp.get('purchasePrice')?.value || 0;
+      const ourPrice = grp.get('ourPrice')?.value || 0;
+      const marketPrice = grp.get('marketPrice')?.value || 0;
+
+      if (purchasePrice >= ourPrice) {
+        errors.push('Purchase price must be lower than our price');
+      }
+      if (ourPrice >= marketPrice) {
+        errors.push('Our price must be lower than market price');
+      }
+    }
+
     const pendingImages: File[] = grp.get('images')?.value || [];
+
     if (!id) {
-      // new variation needs at least one image
-      return pendingImages.length > 0;
+      // New variation needs at least one image
+      if (pendingImages.length === 0) {
+        errors.push('At least one image is required for new variation');
+      }
+    } else {
+      // Existing variation: check if there are any modifications
+      const imagesModified = this.areImagesModified(index);
+      const textFieldsModified = this.areTextFieldsModified(index);
+
+      // Special case: if all images removed, must have replacement images
+      const variationId = id;
+      const allRemoved = this.variationAllImagesRemoved[variationId];
+      if (allRemoved && pendingImages.length === 0) {
+        errors.push(
+          'You must add replacement images if all existing images are removed'
+        );
+      }
+
+      if (!imagesModified && !textFieldsModified) {
+        errors.push('No changes detected to save');
+      }
     }
-    // existing variation: allow save if data dirty OR images pending OR removal flagged (with new images provided)
-    const variationId = id || `new-${index}`;
-    const removalSet = this.getRemovalSet(index);
-    const allRemoved = this.variationAllImagesRemoved[variationId];
-    if (allRemoved) {
-      // must choose replacement images
-      if (pendingImages.length === 0) return false;
-      return true;
+
+    // Show errors if any
+    if (errors.length > 0) {
+      this.messageService.showMessage(
+        'Validation Error',
+        errors.join(', '),
+        'error'
+      );
+      return false;
     }
-    if (grp.dirty) return true;
-    if (pendingImages.length > 0) return true;
-    if (removalSet.size > 0 && pendingImages.length > 0) return true;
-    return false;
+
+    return true;
   }
 
   saveVariation(index: number) {
     if (this.mode !== 'edit') return;
+
+    // Validate and show errors if any
+    if (!this.validateVariationAndShowErrors(index)) {
+      return;
+    }
+
     const grp = this.variationsArray.at(index) as FormGroup;
     const id = grp.get('id')?.value;
     const val = grp.value;
     const files: File[] = grp.get('images')?.value || [];
+
     if (!id) {
-      // create new variation
+      // create new variation - always use FormData
       if (!files.length) return;
       const fd = new FormData();
       fd.append('productId', this.editingId || this.currentProduct?.id);
@@ -575,56 +1034,119 @@ export class AddProductComponent {
         });
       return;
     }
-    // existing variation update with optional images changes
-    const fd = new FormData();
+
+    // Existing variation update - determine if images were modified
     const original = this.currentProduct?.variations?.[index] || {};
-    ['name', 'ourPrice', 'marketPrice', 'purchasePrice', 'weight'].forEach(
-      (k) => {
-        if (val[k] !== undefined && val[k] !== original[k])
-          fd.append(k, val[k]);
-      }
-    );
-    files.forEach((f) => fd.append('images', f));
     const removalSet = this.getRemovalSet(index);
-    if (removalSet.size > 0 || this.variationAllImagesRemoved[id]) {
-      // send list of images to remove
-      if (this.variationAllImagesRemoved[id]) {
-        // ensure removalSet has all previous images
-        const existing = (
-          original.processedImages ||
-          original.images ||
-          []
-        ).map((p: string) => p.split('/').pop() || p);
-        fd.append('removeImages', JSON.stringify(existing));
-      } else {
-        fd.append('removeImages', JSON.stringify(Array.from(removalSet)));
+    const hasNewImages = files.length > 0;
+    const hasRemovedImages =
+      removalSet.size > 0 || this.variationAllImagesRemoved[id];
+    const imagesModified = hasNewImages || hasRemovedImages;
+
+    // Debug logging
+    console.log(`Save variation ${index} decision:`, {
+      hasNewImages,
+      hasRemovedImages,
+      imagesModified,
+      filesCount: files.length,
+      removalSetSize: removalSet.size,
+      allImagesRemoved: this.variationAllImagesRemoved[id],
+      strategy: imagesModified ? 'PUT (with images)' : 'PATCH (text only)',
+    });
+
+    if (imagesModified) {
+      // Images were modified - use PUT with FormData
+      const fd = new FormData();
+
+      // Add all fields (not just changed ones) for PUT request
+      ['name', 'ourPrice', 'marketPrice', 'purchasePrice', 'weight'].forEach(
+        (k) => fd.append(k, val[k])
+      );
+
+      // Add new images
+      files.forEach((f) => fd.append('images', f));
+
+      // Handle image removals
+      if (hasRemovedImages) {
+        if (this.variationAllImagesRemoved[id]) {
+          // Remove all existing images
+          const existing = (
+            original.processedImages ||
+            original.images ||
+            []
+          ).map((p: string) => p.split('/').pop() || p);
+          fd.append('removeImages', JSON.stringify(existing));
+        } else {
+          // Remove specific images
+          fd.append('removeImages', JSON.stringify(Array.from(removalSet)));
+        }
       }
-    }
-    this.http
-      .put(`${environment.apiUrl}/products/variations/${id}`, fd)
-      .subscribe({
-        next: (resp: any) => {
-          this.currentProduct.variations[index] = { ...original, ...resp };
-          grp.get('images')?.reset([]);
-          grp.markAsPristine();
-          removalSet.clear();
-          delete this.variationAllImagesRemoved[id];
-          // if response now has images, relax validators again
-          if (resp?.processedImages?.length || resp?.images?.length) {
-            const imgCtrl = grp.get('images');
-            if (imgCtrl) {
-              imgCtrl.clearValidators();
-              imgCtrl.setValidators([
-                this.maxImagesValidator(this.maxImagesPerVariation),
-              ]);
-              imgCtrl.updateValueAndValidity({ emitEvent: false });
+
+      this.http
+        .put(`${environment.apiUrl}/products/variations/${id}`, fd)
+        .subscribe({
+          next: (resp: any) => {
+            this.currentProduct.variations[index] = { ...original, ...resp };
+            grp.get('images')?.reset([]);
+            grp.markAsPristine();
+            removalSet.clear();
+            delete this.variationAllImagesRemoved[id];
+            // if response now has images, relax validators again
+            if (resp?.processedImages?.length || resp?.images?.length) {
+              const imgCtrl = grp.get('images');
+              if (imgCtrl) {
+                imgCtrl.clearValidators();
+                imgCtrl.setValidators([
+                  this.maxImagesValidator(this.maxImagesPerVariation),
+                ]);
+                imgCtrl.updateValueAndValidity({ emitEvent: false });
+              }
             }
-          }
-          // Close dialog after successful variation update
-          this.closeDialog();
-        },
-        error: (err) => console.error('Error saving variation', err),
+            console.log('Variation updated with PUT (images modified)');
+            this.closeDialog();
+          },
+          error: (err) =>
+            console.error('Error updating variation with images', err),
+        });
+    } else {
+      // Only text fields modified - use PATCH with JSON payload
+      const body: any = {};
+      const textFields = [
+        'name',
+        'ourPrice',
+        'marketPrice',
+        'purchasePrice',
+        'weight',
+      ];
+
+      // Only include changed fields in PATCH
+      textFields.forEach((k) => {
+        if (val[k] !== undefined && val[k] !== original[k]) {
+          body[k] = val[k];
+        }
       });
+
+      // Only proceed if there are actual changes
+      if (Object.keys(body).length === 0) {
+        console.log('No changes detected - skipping PATCH request');
+        return;
+      }
+
+      this.http
+        .patch(`${environment.apiUrl}/products/variations/${id}`, body, {
+          headers: { 'Content-Type': 'application/json' },
+        })
+        .subscribe({
+          next: (resp: any) => {
+            this.currentProduct.variations[index] = { ...original, ...resp };
+            grp.markAsPristine();
+            console.log('Variation updated with PATCH (text fields only)');
+            this.closeDialog();
+          },
+          error: (err) =>
+            console.error('Error updating variation text fields', err),
+        });
+    }
   }
 
   getRemovalSet(index: number): Set<string> {
@@ -649,43 +1171,11 @@ export class AddProductComponent {
     return this.getRemovalSet(index).has(filename);
   }
 
-  canSaveVariationImages(index: number): boolean {
-    const grp = this.variationsArray.at(index) as FormGroup;
-    const id = grp.get('id')?.value;
-    if (!id) return false; // must exist first
-    const pending: File[] = grp.get('images')?.value || [];
-    return pending.length > 0 || this.getRemovalSet(index).size > 0;
-  }
-
-  saveVariationImages(index: number) {
-    const grp = this.variationsArray.at(index) as FormGroup;
-    const id = grp.get('id')?.value;
-    if (!id) return;
-    const fd = new FormData();
-    const removal = Array.from(this.getRemovalSet(index));
-    if (removal.length) fd.append('removeImages', JSON.stringify(removal));
-    const pending: File[] = grp.get('images')?.value || [];
-    pending.forEach((f) => fd.append('images', f));
-    this.http
-      .put(`${environment.apiUrl}/products/variations/${id}`, fd)
-      .subscribe({
-        next: (resp: any) => {
-          this.currentProduct.variations[index] = {
-            ...this.currentProduct.variations[index],
-            ...resp,
-          };
-          grp.get('images')?.reset([]);
-          this.getRemovalSet(index).clear();
-        },
-        error: (err) => console.error('Error updating variation images', err),
-      });
-  }
-
   removeExistingVariationImages(index: number) {
     if (this.mode !== 'edit') return;
     const grp = this.variationsArray.at(index) as FormGroup;
     const id = grp.get('id')?.value;
-    if (!id) return; // only for existing variations
+    if (!id) return;
     const original = this.currentProduct?.variations?.[index] || {};
     const existing = (original.processedImages ||
       original.images ||
@@ -786,7 +1276,7 @@ export class AddProductComponent {
       if (!namesMap[raw]) namesMap[raw] = [];
       namesMap[raw].push(idx);
     });
-    // Apply errors
+
     Object.entries(namesMap).forEach(([_, indices]) => {
       const dup = indices.length > 1;
       indices.forEach((i) => {

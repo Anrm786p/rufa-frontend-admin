@@ -62,6 +62,7 @@
         <td *ngFor="let col of columns">
           <!-- If it's image field -->
           <ng-container *ngIf="col.isImage; else normalField">
+
             <img [src]="row[col.field]" alt="image" width="60" height="60" style="margin: 4px 0; border-radius: 8px;" />
           </ng-container>
           <ng-template #normalField>

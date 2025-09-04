@@ -591,4 +591,216 @@
   }
 }
   }
+
+  /* Remove custom backgrounds from fields to match global form style */
+  .field:has(#categoryId),
+  .field:has([formControlName="subcategoryIds"]),
+  .field:has([formControlName="variationType"]) {
+    background: none !important;
+    padding: 0 !important;
+    border: none !important;
+    margin-bottom: 1.5rem !important;
+  }
+
+  /* Standard label styling consistent with global */
+  .field:has(#categoryId) label,
+  .field:has([formControlName="subcategoryIds"]) label,
+  .field:has([formControlName="variationType"]) label {
+    font-weight: 500 !important;
+    margin-bottom: 0.75rem !important;
+    display: block !important;
+    color: #333 !important;
+    font-size: 0.95rem !important;
+  }
+
+  /* Let global styles handle dropdowns - only minimal overrides */
+  .p-dropdown,
+  .p-multiselect {
+    /* Global styles already apply, just ensure no conflicts */
+    box-sizing: border-box !important;
+  }
+
+  /* CRITICAL FIX: Force dropdown labels to display full text */
+  :host ::ng-deep .p-dropdown-label,
+  :host ::ng-deep .p-multiselect-label {
+    /* Complete reset and force proper display */
+    width: auto !important;
+    max-width: none !important;
+    min-width: 200px !important;
+    display: inline-block !important;
+    white-space: nowrap !important;
+    overflow: visible !important;
+    text-overflow: unset !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    font-size: 1rem !important;
+    color: #333333 !important;
+    line-height: 1.5 !important;
+    text-align: left !important;
+    font-family: inherit !important;
+    letter-spacing: normal !important;
+    word-spacing: normal !important;
+    text-indent: 0 !important;
+    text-transform: none !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+
+  /* Force the dropdown container to accommodate full text */
+  :host ::ng-deep .p-dropdown {
+    position: relative !important;
+    display: flex !important;
+    align-items: center !important;
+    width: 100% !important;
+    min-height: 45px !important;
+  }
+
+  /* Ensure the input area takes available space */
+  :host ::ng-deep .p-dropdown .p-inputtext {
+    flex: 1 !important;
+    width: calc(100% - 3rem) !important;
+    border: none !important;
+    padding: 0 8px 0 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    min-height: auto !important;
+    overflow: visible !important;
+  }
+
+  /* Specific fix for placeholder text */
+  :host ::ng-deep .p-dropdown-label.p-placeholder {
+    color: #6c757d !important;
+    opacity: 1 !important;
+    font-style: normal !important;
+    min-width: 200px !important;
+  }
+
+  /* Ensure no width restrictions on selected text */
+  :host ::ng-deep .p-dropdown-label:not(.p-placeholder) {
+    color: #333333 !important;
+    opacity: 1 !important;
+    min-width: 200px !important;
+  }
+
+  /* Fix for the dropdown trigger */
+  :host ::ng-deep .p-dropdown-trigger {
+    width: 3rem !important;
+    flex-shrink: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  /* Remove any container restrictions */
+  :host ::ng-deep .p-dropdown .p-dropdown-label-container {
+    flex: 1 !important;
+    min-width: 0 !important;
+    width: auto !important;
+    overflow: visible !important;
+  }
+
+  /* Force multiselect labels to show properly too */
+  :host ::ng-deep .p-multiselect-label.p-placeholder {
+    color: #6c757d !important;
+    opacity: 1 !important;
+    min-width: 200px !important;
+  }
+
+  /* Additional backup - remove any hidden overflow */
+  :host ::ng-deep .p-dropdown *,
+  :host ::ng-deep .p-multiselect * {
+    overflow: visible !important;
+    text-overflow: unset !important;
+    white-space: nowrap !important;
+  }
+
+  /* EMERGENCY FIX: Force text visibility with aggressive overrides */
+  :host ::ng-deep .field .p-dropdown,
+  :host ::ng-deep .field .p-multiselect {
+    min-width: 300px !important;
+    width: 100% !important;
+  }
+
+  :host ::ng-deep .field .p-dropdown-label,
+  :host ::ng-deep .field .p-multiselect-label {
+    width: auto !important;
+    max-width: calc(100% - 50px) !important;
+    min-width: 250px !important;
+    text-overflow: unset !important;
+    overflow: visible !important;
+    white-space: nowrap !important;
+    display: inline-block !important;
+    font-size: 1rem !important;
+    color: #333333 !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    text-align: left !important;
+    line-height: 1.5 !important;
+  }
+
+  /* Force placeholder to show */
+  :host ::ng-deep .field .p-dropdown-label.p-placeholder,
+  :host ::ng-deep .field .p-multiselect-label.p-placeholder {
+    color: #6c757d !important;
+    opacity: 1 !important;
+    font-style: normal !important;
+  }
+
+  /* Ensure container doesn't restrict content */
+  :host ::ng-deep .field .p-dropdown .p-inputtext,
+  :host ::ng-deep .field .p-multiselect .p-multiselect-label-container {
+    width: calc(100% - 50px) !important;
+    overflow: visible !important;
+    background: transparent !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* Final backup - show all text content */
+  :host ::ng-deep .field * {
+    text-overflow: unset !important;
+    overflow: visible !important;
+  }
+
+  /* Ensure dialog container doesn't interfere */
+  :host ::ng-deep .p-dialog-content .field {
+    min-width: 300px !important;
+    width: 100% !important;
+  }
+
+  /* Price validation error styling */
+  :host ::ng-deep .p-message-error {
+    background: #fef2f2 !important;
+    border: 1px solid #fecaca !important;
+    color: #b91c1c !important;
+    border-radius: 6px !important;
+  }
+
+  :host ::ng-deep .p-message-error .p-message-icon {
+    color: #dc2626 !important;
+  }
+
+  :host ::ng-deep .p-message-error .p-message-text {
+    font-size: 0.875rem !important;
+    line-height: 1.4 !important;
+  }
+
+  :host ::ng-deep .p-message-error .p-message-text strong {
+    font-weight: 600 !important;
+  }
+
+  :host ::ng-deep .p-message-error .p-message-text small {
+    color: #7f1d1d !important;
+    font-style: italic !important;
+  }
 }
