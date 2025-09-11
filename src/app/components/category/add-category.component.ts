@@ -11,6 +11,7 @@ import { CommonModule } from '@angular/common';
 import { FileUploadModule } from 'primeng/fileupload';
 import { SharedDialogComponent } from '../shared/dialog/shared-dialog.component';
 import { CategoryService, Category } from '../../services/category.service';
+import { SharedMessageService } from '../../services/message.service';
 
 @Component({
   selector: 'app-add-category',
@@ -41,7 +42,8 @@ export class AddCategoryComponent {
 
   constructor(
     private fb: FormBuilder,
-    private categoryService: CategoryService
+    private categoryService: CategoryService,
+    private messageService: SharedMessageService
   ) {
     this.addCategoryForm = this.fb.group({
       name: ['', [Validators.required, Validators.maxLength(32)]],
@@ -172,43 +174,83 @@ export class AddCategoryComponent {
     return nameValid && imageValid;
   }
 
-  addCategory() {
-    // Mark all fields as touched to trigger validation display
-    Object.keys(this.addCategoryForm.controls).forEach((key) => {
-      const control = this.addCategoryForm.get(key);
-      control?.markAsTouched();
-    });
+  private validateFormAndShowErrors(): boolean {
+    // Mark all fields as touched to show validation errors
+    this.addCategoryForm.markAllAsTouched();
 
-    if (this.addCategoryForm.valid && (this.selectedImage || this.isEditMode)) {
-      const formData = new FormData();
-      formData.append('name', this.addCategoryForm.get('name')?.value);
+    const errors: string[] = [];
 
-      // Only append image if a new one is selected or it's a new category
-      if (this.selectedImage) {
-        formData.append('image', this.selectedImage);
+    // Check name field
+    const nameControl = this.addCategoryForm.get('name');
+    if (nameControl?.invalid) {
+      if (nameControl.hasError('required')) {
+        errors.push('Category name is required');
       }
-
-      const request =
-        this.isEditMode && this.editId
-          ? this.categoryService.updateCategory(this.editId, formData)
-          : this.categoryService.addCategory(formData);
-
-      request.subscribe({
-        next: (response) => {
-          console.log(
-            `Category ${this.isEditMode ? 'updated' : 'added'} successfully`,
-            response
-          );
-          this.onSave.emit(response);
-          this.closeDialog();
-        },
-        error: (error) => {
-          console.error(
-            `Error ${this.isEditMode ? 'updating' : 'adding'} category`,
-            error
-          );
-        },
-      });
+      if (nameControl.hasError('maxlength')) {
+        errors.push('Category name cannot be longer than 32 characters');
+      }
+      if (nameControl.hasError('duplicate')) {
+        errors.push('Category name already exists');
+      }
     }
+
+    // Check image requirement for new categories
+    if (!this.isEditMode && !this.selectedImage) {
+      errors.push('Category image is required');
+    }
+
+    // Check image validation errors
+    if (this.imageError) {
+      errors.push(this.imageError);
+    }
+
+    // Show errors if any
+    if (errors.length > 0) {
+      this.messageService.showMessage(
+        'Validation Error',
+        errors.join(', '),
+        'error'
+      );
+      return false;
+    }
+
+    return true;
+  }
+
+  addCategory() {
+    // Validate and show errors if any
+    if (!this.validateFormAndShowErrors()) {
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('name', this.addCategoryForm.get('name')?.value);
+
+    // Only append image if a new one is selected or it's a new category
+    if (this.selectedImage) {
+      formData.append('image', this.selectedImage);
+    }
+
+    const request =
+      this.isEditMode && this.editId
+        ? this.categoryService.updateCategory(this.editId, formData)
+        : this.categoryService.addCategory(formData);
+
+    request.subscribe({
+      next: (response) => {
+        console.log(
+          `Category ${this.isEditMode ? 'updated' : 'added'} successfully`,
+          response
+        );
+        this.onSave.emit(response);
+        this.closeDialog();
+      },
+      error: (error) => {
+        console.error(
+          `Error ${this.isEditMode ? 'updating' : 'adding'} category`,
+          error
+        );
+      },
+    });
   }
 }

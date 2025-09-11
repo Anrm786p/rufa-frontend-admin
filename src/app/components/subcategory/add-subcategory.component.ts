@@ -13,6 +13,7 @@ import { SelectModule } from 'primeng/select';
 import { SharedDialogComponent } from '../shared/dialog/shared-dialog.component';
 import { SubcategoryService } from '../../services/subcategory.service';
 import { CategoryService, Category } from '../../services/category.service';
+import { SharedMessageService } from '../../services/message.service';
 
 @Component({
   selector: 'app-add-subcategory',
@@ -148,7 +149,7 @@ import { CategoryService, Category } from '../../services/category.service';
       [title]="isEditMode ? 'Edit Subcategory' : 'Add Subcategory'"
       [(visible)]="displayDialog"
       [submitLabel]="isEditMode ? 'Update Subcategory' : 'Add Subcategory'"
-      [isSubmitDisabled]="!isFormValid()"
+      [isSubmitDisabled]="false"
       (cancel)="closeDialog()"
       (submit)="addSubcategory()"
     >
@@ -292,7 +293,8 @@ export class AddSubcategoryComponent {
   constructor(
     private fb: FormBuilder,
     private subcategoryService: SubcategoryService,
-    private categoryService: CategoryService
+    private categoryService: CategoryService,
+    private messageService: SharedMessageService
   ) {
     this.addSubcategoryForm = this.fb.group({
       name: ['', [Validators.required, Validators.maxLength(32)]],
@@ -448,48 +450,94 @@ export class AddSubcategoryComponent {
     return nameValid && categoryValid && imageValid;
   }
 
-  addSubcategory() {
-    Object.keys(this.addSubcategoryForm.controls).forEach((key) => {
-      const control = this.addSubcategoryForm.get(key);
-      control?.markAsTouched();
-    });
+  private validateFormAndShowErrors(): boolean {
+    // Mark all fields as touched to show validation errors
+    this.addSubcategoryForm.markAllAsTouched();
 
-    if (
-      this.addSubcategoryForm.valid &&
-      (this.selectedImage || this.isEditMode)
-    ) {
-      const formData = new FormData();
-      formData.append('name', this.addSubcategoryForm.get('name')?.value);
-      formData.append(
-        'categoryId',
-        this.addSubcategoryForm.get('categoryId')?.value
-      );
+    const errors: string[] = [];
 
-      if (this.selectedImage) {
-        formData.append('image', this.selectedImage);
+    // Check name field
+    const nameControl = this.addSubcategoryForm.get('name');
+    if (nameControl?.invalid) {
+      if (nameControl.hasError('required')) {
+        errors.push('Subcategory name is required');
       }
-
-      const request =
-        this.isEditMode && this.editId
-          ? this.subcategoryService.updateSubcategory(this.editId, formData)
-          : this.subcategoryService.addSubcategory(formData);
-
-      request.subscribe({
-        next: (response) => {
-          console.log(
-            `Subcategory ${this.isEditMode ? 'updated' : 'added'} successfully`,
-            response
-          );
-          this.onSave.emit(response);
-          this.closeDialog();
-        },
-        error: (error) => {
-          console.error(
-            `Error ${this.isEditMode ? 'updating' : 'adding'} subcategory`,
-            error
-          );
-        },
-      });
+      if (nameControl.hasError('maxlength')) {
+        errors.push('Subcategory name cannot be longer than 32 characters');
+      }
+      if (nameControl.hasError('duplicate')) {
+        errors.push('Subcategory name already exists in this category');
+      }
     }
+
+    // Check category field
+    const categoryControl = this.addSubcategoryForm.get('categoryId');
+    if (categoryControl?.invalid) {
+      if (categoryControl.hasError('required')) {
+        errors.push('Category selection is required');
+      }
+    }
+
+    // Check image requirement for new subcategories
+    if (!this.isEditMode && !this.selectedImage) {
+      errors.push('Subcategory image is required');
+    }
+
+    // Check image validation errors
+    if (this.imageError) {
+      errors.push(this.imageError);
+    }
+
+    // Show errors if any
+    if (errors.length > 0) {
+      this.messageService.showMessage(
+        'Validation Error',
+        errors.join(', '),
+        'error'
+      );
+      return false;
+    }
+
+    return true;
+  }
+
+  addSubcategory() {
+    // Validate and show errors if any
+    if (!this.validateFormAndShowErrors()) {
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('name', this.addSubcategoryForm.get('name')?.value);
+    formData.append(
+      'categoryId',
+      this.addSubcategoryForm.get('categoryId')?.value
+    );
+
+    if (this.selectedImage) {
+      formData.append('image', this.selectedImage);
+    }
+
+    const request =
+      this.isEditMode && this.editId
+        ? this.subcategoryService.updateSubcategory(this.editId, formData)
+        : this.subcategoryService.addSubcategory(formData);
+
+    request.subscribe({
+      next: (response) => {
+        console.log(
+          `Subcategory ${this.isEditMode ? 'updated' : 'added'} successfully`,
+          response
+        );
+        this.onSave.emit(response);
+        this.closeDialog();
+      },
+      error: (error) => {
+        console.error(
+          `Error ${this.isEditMode ? 'updating' : 'adding'} subcategory`,
+          error
+        );
+      },
+    });
   }
 }

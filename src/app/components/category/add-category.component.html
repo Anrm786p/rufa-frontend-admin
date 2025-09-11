@@ -2,7 +2,7 @@
   [title]="isEditMode ? 'Edit Category' : 'Add Category'"
   [(visible)]="displayDialog"
   [submitLabel]="isEditMode ? 'Update Category' : 'Add Category'"
-  [isSubmitDisabled]="!isFormValid()"
+  [isSubmitDisabled]="false"
   (cancel)="closeDialog()"
   (submit)="addCategory()">
 
