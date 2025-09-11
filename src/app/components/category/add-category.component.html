@@ -18,7 +18,9 @@
           [ngClass]="{'ng-invalid ng-dirty': addCategoryForm.get('name')?.invalid && addCategoryForm.get('name')?.touched}" 
         />
         <small class="p-error block" *ngIf="addCategoryForm.get('name')?.invalid && addCategoryForm.get('name')?.touched">
-          Category name is required
+          <span *ngIf="addCategoryForm.get('name')?.hasError('required')">Category name is required</span>
+          <span *ngIf="addCategoryForm.get('name')?.hasError('maxlength')">Category name cannot exceed 32 characters</span>
+          <span *ngIf="addCategoryForm.get('name')?.hasError('duplicate')">Category name already exists</span>
         </small>
       </div>
 

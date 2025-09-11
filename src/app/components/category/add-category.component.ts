@@ -44,7 +44,7 @@ export class AddCategoryComponent {
     private categoryService: CategoryService
   ) {
     this.addCategoryForm = this.fb.group({
-      name: ['', Validators.required],
+      name: ['', [Validators.required, Validators.maxLength(32)]],
       image: [null],
     });
     // preload categories for uniqueness check
@@ -52,6 +52,28 @@ export class AddCategoryComponent {
     this.addCategoryForm
       .get('name')
       ?.valueChanges.subscribe(() => this.applyNameUniqueness());
+
+    // Auto Upper Camel Case transformation for category name
+    this.addCategoryForm.get('name')?.valueChanges.subscribe((value) => {
+      if (value && typeof value === 'string') {
+        const transformed = this.toUpperCamelCase(value);
+        if (transformed !== value) {
+          this.addCategoryForm
+            .get('name')
+            ?.setValue(transformed, { emitEvent: false });
+        }
+      }
+    });
+  }
+
+  // Utility method to convert text to Upper Camel Case (PascalCase)
+  private toUpperCamelCase(text: string): string {
+    if (!text) return '';
+    return text
+      .toLowerCase()
+      .split(' ')
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
   }
 
   private loadCategories() {

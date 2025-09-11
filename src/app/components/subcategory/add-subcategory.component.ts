@@ -174,7 +174,17 @@ import { CategoryService, Category } from '../../services/category.service';
                 addSubcategoryForm.get('name')?.touched
               "
             >
-              Subcategory name is required
+              <span *ngIf="addSubcategoryForm.get('name')?.hasError('required')"
+                >Subcategory name is required</span
+              >
+              <span
+                *ngIf="addSubcategoryForm.get('name')?.hasError('maxlength')"
+                >Subcategory name cannot exceed 32 characters</span
+              >
+              <span
+                *ngIf="addSubcategoryForm.get('name')?.hasError('duplicate')"
+                >Subcategory name already exists in this category</span
+              >
             </small>
           </div>
 
@@ -285,7 +295,7 @@ export class AddSubcategoryComponent {
     private categoryService: CategoryService
   ) {
     this.addSubcategoryForm = this.fb.group({
-      name: ['', Validators.required],
+      name: ['', [Validators.required, Validators.maxLength(32)]],
       categoryId: ['', Validators.required],
       image: [null],
     });
@@ -297,6 +307,28 @@ export class AddSubcategoryComponent {
     this.addSubcategoryForm
       .get('categoryId')
       ?.valueChanges.subscribe(() => this.applyNameUniqueness());
+
+    // Auto Upper Camel Case transformation for subcategory name
+    this.addSubcategoryForm.get('name')?.valueChanges.subscribe((value) => {
+      if (value && typeof value === 'string') {
+        const transformed = this.toUpperCamelCase(value);
+        if (transformed !== value) {
+          this.addSubcategoryForm
+            .get('name')
+            ?.setValue(transformed, { emitEvent: false });
+        }
+      }
+    });
+  }
+
+  // Utility method to convert text to Upper Camel Case (PascalCase)
+  private toUpperCamelCase(text: string): string {
+    if (!text) return '';
+    return text
+      .toLowerCase()
+      .split(' ')
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
   }
 
   private loadCategories() {

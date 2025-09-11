@@ -104,6 +104,18 @@ export class AddProductComponent implements OnInit {
     this.addProductForm
       .get('variations')
       ?.valueChanges.subscribe(() => this.applyVariationNameUniqueness());
+
+    // Auto Upper Camel Case transformation for product name
+    this.addProductForm.get('name')?.valueChanges.subscribe((value) => {
+      if (value && typeof value === 'string') {
+        const transformed = this.toUpperCamelCase(value);
+        if (transformed !== value) {
+          this.addProductForm
+            .get('name')
+            ?.setValue(transformed, { emitEvent: false });
+        }
+      }
+    });
   }
 
   ngOnInit() {
@@ -125,10 +137,10 @@ export class AddProductComponent implements OnInit {
 
   // Variation FormGroup factory
   private createVariationGroup(): FormGroup {
-    return this.fb.group(
+    const group = this.fb.group(
       {
         id: [''],
-        name: ['', Validators.required],
+        name: ['', [Validators.required, Validators.maxLength(32)]],
         ourPrice: [null, [Validators.required, Validators.min(0)]],
         marketPrice: [null, [Validators.required, Validators.min(0)]],
         purchasePrice: [null, [Validators.required, Validators.min(0)]],
@@ -144,6 +156,18 @@ export class AddProductComponent implements OnInit {
       },
       { validators: this.priceHierarchyValidator() }
     );
+
+    // Auto Upper Camel Case transformation for variation name
+    group.get('name')?.valueChanges.subscribe((value) => {
+      if (value && typeof value === 'string') {
+        const transformed = this.toUpperCamelCase(value);
+        if (transformed !== value) {
+          group.get('name')?.setValue(transformed, { emitEvent: false });
+        }
+      }
+    });
+
+    return group;
   }
 
   // Helper methods for price validation errors
@@ -241,7 +265,14 @@ export class AddProductComponent implements OnInit {
 
       // Required fields
       if (variationGroup.get('name')?.invalid) {
-        errors.push(`Variation ${variationNumber}: Name is required`);
+        if (variationGroup.get('name')?.hasError('required')) {
+          errors.push(`Variation ${variationNumber}: Name is required`);
+        }
+        if (variationGroup.get('name')?.hasError('maxlength')) {
+          errors.push(
+            `Variation ${variationNumber}: Name cannot exceed 32 characters`
+          );
+        }
       }
       if (variationGroup.get('ourPrice')?.invalid) {
         errors.push(
@@ -435,6 +466,16 @@ export class AddProductComponent implements OnInit {
         ? null
         : { minTags: { requiredTags: min, actualTags: value.length } };
     };
+  }
+
+  // Utility method to convert text to Upper Camel Case (PascalCase)
+  private toUpperCamelCase(text: string): string {
+    if (!text) return '';
+    return text
+      .toLowerCase()
+      .split(' ')
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
   }
 
   // Price hierarchy validators
@@ -936,6 +977,9 @@ export class AddProductComponent implements OnInit {
       if (!control?.valid) {
         if (control?.hasError('required')) {
           errors.push(`${field.label} is required`);
+        }
+        if (control?.hasError('maxlength') && field.name === 'name') {
+          errors.push(`${field.label} cannot exceed 32 characters`);
         }
       }
     });
